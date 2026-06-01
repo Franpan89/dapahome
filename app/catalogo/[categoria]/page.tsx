@@ -1,20 +1,56 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryPills } from '@/components/CategoryPills';
 import { CatalogSearch } from '@/components/CatalogSearch';
-import { getCategories, listProducts } from '@/lib/supabase/queries';
+import { CatalogToolbar, CatalogPagination } from '@/components/CatalogToolbar';
+import { getCategories, searchCatalog } from '@/lib/supabase/queries';
+import type { CatalogSort } from '@/lib/supabase/queries';
 
 export const revalidate = 60;
 
-export default async function CategoryPage({
+const VALID_SORTS: CatalogSort[] = ['recientes', 'destacados', 'precio-asc', 'precio-desc'];
+
+export async function generateMetadata({
   params,
 }: {
   params: Promise<{ categoria: string }>;
+}): Promise<Metadata> {
+  const { categoria } = await params;
+  const categories = await getCategories();
+  const cat = categories.find((c) => c.slug === categoria);
+  if (!cat) return { title: 'Categoría no encontrada' };
+  return {
+    title: cat.name,
+    description: cat.description ?? undefined,
+    alternates: { canonical: `/catalogo/${cat.slug}` },
+  };
+}
+
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ categoria: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; min?: string; max?: string; page?: string }>;
 }) {
   const { categoria } = await params;
-  const [categories, products] = await Promise.all([
+  const sp = await searchParams;
+  const sort = VALID_SORTS.includes(sp.sort as CatalogSort) ? (sp.sort as CatalogSort) : 'recientes';
+  const priceMin = sp.min ? Number(sp.min) : undefined;
+  const priceMax = sp.max ? Number(sp.max) : undefined;
+  const page = sp.page ? Number(sp.page) : 1;
+
+  const [categories, { items, total, perPage }] = await Promise.all([
     getCategories(),
-    listProducts({ category: categoria }),
+    searchCatalog({
+      category: categoria,
+      q: sp.q,
+      sort,
+      priceMin: Number.isFinite(priceMin) ? priceMin : undefined,
+      priceMax: Number.isFinite(priceMax) ? priceMax : undefined,
+      page: Number.isFinite(page) ? page : 1,
+    }),
   ]);
   const cat = categories.find((c) => c.slug === categoria);
   if (!cat) notFound();
@@ -30,25 +66,35 @@ export default async function CategoryPage({
       </header>
 
       <div className="space-y-4">
-        <CatalogSearch />
+        <CatalogSearch defaultValue={sp.q ?? ''} />
         <CategoryPills categories={categories} />
       </div>
 
       <div className="mt-8">
-        <div className="mb-5 text-sm text-ink-600">
-          {products.length} {products.length === 1 ? 'producto' : 'productos'}
+        <div className="mb-5">
+          <CatalogToolbar
+            total={total}
+            q={sp.q}
+            sort={sort}
+            priceMin={Number.isFinite(priceMin) ? priceMin : undefined}
+            priceMax={Number.isFinite(priceMax) ? priceMax : undefined}
+          />
         </div>
-        {products.length === 0 ? (
+
+        {items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-ink-200 bg-surface p-12 text-center text-ink-600">
             <div className="text-4xl mb-3">📦</div>
-            Aún no hay productos en esta categoría.
+            Sin productos con estos filtros en esta categoría.
           </div>
         ) : (
-          <div className="grid gap-x-4 gap-y-10 grid-cols-2 lg:grid-cols-4">
-            {products.map((p, i) => (
-              <ProductCard key={p.id} product={p} priority={i < 4} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-x-4 gap-y-10 grid-cols-2 lg:grid-cols-4">
+              {items.map((p, i) => (
+                <ProductCard key={p.id} product={p} priority={i < 4} />
+              ))}
+            </div>
+            <CatalogPagination page={page} total={total} perPage={perPage} />
+          </>
         )}
       </div>
     </div>

@@ -1,6 +1,8 @@
 import { requireAdmin } from '@/lib/supabase/guard';
 import { AdminShell } from '@/components/AdminShell';
 import { saveSettingAction } from '@/app/admin/actions';
+import { PromoBarForm } from '@/components/admin/PromoBarForm';
+import type { PromoBar } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +14,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const wa = map.get('whatsapp') ?? { number: '', greeting: '' };
   const tpl = map.get('checkout_template') ?? { intro: '', outro: '' };
   const hero = map.get('hero') ?? { eyebrow: '', title: '', subtitle: '' };
+  const promo = (map.get('promo_bar') as PromoBar) ?? { enabled: false, text: '', link: '' };
 
   return (
     <AdminShell email={user.email}>
@@ -55,6 +58,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           current={hero}
           className="lg:col-span-2"
         />
+        <PromoBarForm current={promo} />
       </div>
     </AdminShell>
   );

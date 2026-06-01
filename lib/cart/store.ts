@@ -15,9 +15,16 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface CustomerData {
+  name: string;
+  city: string;
+  notes: string;
+}
+
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  customer: CustomerData;
   add: (item: Omit<CartItem, 'quantity'>, qty?: number) => void;
   remove: (key: string) => void;
   setQty: (key: string, qty: number) => void;
@@ -25,6 +32,7 @@ interface CartState {
   open: () => void;
   close: () => void;
   toggle: () => void;
+  setCustomer: (patch: Partial<CustomerData>) => void;
 }
 
 const keyOf = (it: { productId: string; variantId: string | null }) =>
@@ -35,6 +43,8 @@ export const useCart = create<CartState>()(
     (set) => ({
       items: [],
       isOpen: false,
+      customer: { name: '', city: '', notes: '' },
+      setCustomer: (patch) => set((s) => ({ customer: { ...s.customer, ...patch } })),
       add: (item, qty = 1) =>
         set((s) => {
           const k = keyOf(item);

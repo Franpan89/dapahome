@@ -43,22 +43,6 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section id="mayoristas" className="mt-16">
-          <div className="label">Mayoristas</div>
-          <h2 className="mt-2 font-display text-3xl tracking-tight">Compra por volumen</h2>
-          <p className="mt-3 text-ink-600">
-            Precios escalonados y catálogo extendido. Escríbenos por WhatsApp con tu RUC y armamos
-            una propuesta a medida.
-          </p>
-          <a
-            href="https://wa.me/593998001894?text=Hola%2C%20me%20interesa%20el%20programa%20mayorista"
-            target="_blank"
-            rel="noopener"
-            className="mt-6 inline-flex btn-primary"
-          >
-            Solicitar acceso
-          </a>
-        </section>
       </div>
 
       {/* ============== ENCUÉNTRANOS ============== */}

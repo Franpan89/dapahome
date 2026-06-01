@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NewsletterForm } from '@/components/NewsletterForm';
 
 export function SiteFooter() {
   return (
@@ -26,6 +27,9 @@ export function SiteFooter() {
             Estudio y tienda de objetos para el hogar. Curaduría de iluminación, decoración y
             domótica con instalación a domicilio en Ecuador.
           </p>
+          <div className="mt-6 max-w-sm">
+            <NewsletterForm />
+          </div>
         </div>
         <FooterCol title="Catálogo" links={[
           ['/catalogo', 'Todos los productos'],
@@ -36,6 +40,7 @@ export function SiteFooter() {
         ]} />
         <FooterCol title="Empresa" links={[
           ['/sobre-nosotros', 'Sobre nosotros'],
+          ['/blog', 'Blog'],
           ['/sobre-nosotros#mayoristas', 'Mayoristas'],
           ['/sobre-nosotros#diseno', 'Para diseñadores'],
         ]} />

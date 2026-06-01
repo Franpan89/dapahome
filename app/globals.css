@@ -47,6 +47,11 @@
     border-radius: 6px;
   }
 
+  /* Suprime el ring sólo en mouse/touch (no en teclado) */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
   .font-display {
     font-feature-settings: 'ss01';
     letter-spacing: -0.025em;
@@ -96,7 +101,7 @@
   .input {
     @apply w-full rounded-xl border border-ink-200 bg-surface px-4 py-3 text-sm
            placeholder:text-ink-400
-           focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15
+           focus-visible:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15
            min-h-[44px];
   }
 

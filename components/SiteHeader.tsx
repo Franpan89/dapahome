@@ -42,7 +42,7 @@ export function SiteHeader() {
           <NavLink href="/catalogo/iluminacion">Iluminación</NavLink>
           <NavLink href="/catalogo/decoracion">Decoración</NavLink>
           <NavLink href="/catalogo/domotica">Domótica</NavLink>
-          <NavLink href="/sobre-nosotros">Nosotros</NavLink>
+          <NavLink href="/blog">Blog</NavLink>
           <NavLink href="/sobre-nosotros#encuentranos">Encuéntranos</NavLink>
         </nav>
 
@@ -90,7 +90,7 @@ export function SiteHeader() {
               ['/catalogo/decoracion', 'Decoración'],
               ['/catalogo/domotica', 'Domótica'],
               ['/catalogo/mobiliario', 'Mobiliario'],
-              ['/sobre-nosotros', 'Nosotros'],
+              ['/blog', 'Blog'],
               ['/sobre-nosotros#encuentranos', 'Encuéntranos'],
             ].map(([href, label]) => (
               <li key={href}>

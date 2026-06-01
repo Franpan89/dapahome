@@ -2,17 +2,32 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryPills } from '@/components/CategoryPills';
-import { getCategories, getSettings, listProducts, imageUrl } from '@/lib/supabase/queries';
+import {
+  getCategories,
+  getSettings,
+  listInstallations,
+  listProducts,
+  imageUrl,
+} from '@/lib/supabase/queries';
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [settings, categories, featured, latest] = await Promise.all([
+  const [settings, categories, featured, latest, installationsDb] = await Promise.all([
     getSettings(),
     getCategories(),
     listProducts({ featured: true, limit: 4 }),
     listProducts({ limit: 8 }),
+    listInstallations(),
   ]);
+
+  const installations = installationsDb.length
+    ? installationsDb.map((it) => ({
+        src: imageUrl(it.storage_path),
+        alt: it.alt ?? '',
+        caption: it.caption ?? '',
+      }))
+    : INSTALACIONES_FALLBACK;
 
   return (
     <>
@@ -135,6 +150,44 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ============== INSTALACIONES (LÁMPARAS EN EL MERCADO) ============== */}
+      <section className="container-page mb-20">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <div className="label">Galería</div>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl tracking-tight">
+              Nuestras lámparas en el mercado
+            </h2>
+            <p className="mt-2 max-w-xl text-ink-600 text-pretty">
+              Proyectos reales con clientes de Dapa Home: hogares, oficinas y comercios iluminados con nuestras piezas.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 [grid-auto-flow:dense]">
+          {installations.map((item, i) => (
+            <figure
+              key={i}
+              className={`relative overflow-hidden rounded-2xl bg-ink-100 ${
+                i % 5 === 0 ? 'md:col-span-2 md:row-span-2 aspect-square' : 'aspect-[4/5]'
+              }`}
+            >
+              <Image
+                src={item.src}
+                alt={item.alt}
+                fill
+                sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+              {item.caption && (
+                <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/70 to-transparent p-3 text-xs text-white">
+                  {item.caption}
+                </figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+      </section>
+
       {/* ============== CTA WHATSAPP ============== */}
       <section className="container-page mb-20">
         <div className="relative overflow-hidden rounded-3xl bg-primary text-white p-8 md:p-14">
@@ -164,6 +217,16 @@ export default async function HomePage() {
     </>
   );
 }
+
+const INSTALACIONES_FALLBACK: { src: string; alt: string; caption?: string }[] = [
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante instalada en sala', caption: 'Sala — Quito' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara de mesa en dormitorio', caption: 'Dormitorio — Cumbayá' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Aplique de pared en pasillo', caption: 'Pasillo — Guayaquil' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara de pie en oficina', caption: 'Oficina — Quito' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante sobre comedor', caption: 'Comedor — Cuenca' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante en restaurante', caption: 'Restaurante — Quito' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámparas en cafetería', caption: 'Cafetería — Quito' },
+];
 
 function ArrowIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

@@ -106,6 +106,7 @@ export const DEMO_SETTINGS: SiteSettings = {
     title: 'Diseño para el hogar que se siente personal.',
     subtitle: 'Iluminación, decoración y domótica curada en Ecuador.',
   },
+  promo_bar: { enabled: false, text: '', link: '' },
 };
 
 export function isSupabaseConfigured() {

@@ -9,16 +9,22 @@ import { useCart } from '@/lib/cart/store';
 import type { ProductWithRelations, ProductVariant } from '@/lib/supabase/types';
 import { cn } from '@/lib/cn';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
+import { ProductLightbox } from '@/components/ProductLightbox';
 
 export function ProductDetail({ product }: { product: ProductWithRelations }) {
   const [activeImg, setActiveImg] = useState(0);
   const [variant, setVariant] = useState<ProductVariant | null>(product.variants[0] ?? null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const add = useCart((s) => s.add);
 
   const price = variant?.price_override ?? product.base_price;
   const mainImage = product.images[activeImg] ?? product.images[0];
+
+  const stock = variant?.stock ?? null;
+  const isOutOfStock = stock !== null && stock <= 0;
+  const isLowStock = stock !== null && stock > 0 && stock <= 5;
 
   const onAdd = () => {
     add(
@@ -88,19 +94,32 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
             </button>
           ))}
         </div>
-        <div className="order-1 lg:order-2 relative aspect-square overflow-hidden rounded-3xl bg-ink-50">
+        <button
+          type="button"
+          onClick={() => mainImage && setLightboxOpen(true)}
+          className="order-1 lg:order-2 group relative block aspect-square overflow-hidden rounded-3xl bg-ink-50 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+          aria-label="Ampliar imagen"
+        >
           {mainImage && (
-            <Image
-              key={mainImage.id}
-              src={imageUrl(mainImage.storage_path)}
-              alt={mainImage.alt ?? product.name}
-              fill
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              priority
-              className="object-cover animate-rise"
-            />
+            <>
+              <Image
+                key={mainImage.id}
+                src={imageUrl(mainImage.storage_path)}
+                alt={mainImage.alt ?? product.name}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                priority
+                className="object-cover animate-rise transition-transform group-hover:scale-[1.02]"
+              />
+              <span className="absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-full bg-white/85 text-ink-900 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+                </svg>
+              </span>
+            </>
           )}
-        </div>
+        </button>
       </div>
 
       {/* Info */}
@@ -117,8 +136,20 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
         <h1 className="font-display text-4xl md:text-5xl leading-[1.05] tracking-tight text-balance">
           {product.name}
         </h1>
-        <div className="font-display text-3xl font-semibold tabular-nums">
-          {formatMoney(price, product.currency)}
+        <div className="flex items-baseline gap-3">
+          <div className="font-display text-3xl font-semibold tabular-nums">
+            {formatMoney(price, product.currency)}
+          </div>
+          {isOutOfStock && (
+            <span className="rounded-full bg-danger/10 px-2.5 py-1 text-2xs font-medium text-danger">
+              Agotado
+            </span>
+          )}
+          {isLowStock && (
+            <span className="rounded-full bg-secondary/15 px-2.5 py-1 text-2xs font-medium text-secondary">
+              Quedan {stock}
+            </span>
+          )}
         </div>
 
         {product.description && (
@@ -131,22 +162,27 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
           <fieldset>
             <legend className="label mb-3">Variante</legend>
             <div className="flex flex-wrap gap-2">
-              {product.variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariant(v)}
-                  className={cn(
-                    'rounded-full px-5 py-2.5 text-sm font-medium transition-all min-h-[44px]',
-                    variant?.id === v.id
-                      ? 'bg-ink-900 text-white'
-                      : 'bg-ink-50 text-ink-900 hover:bg-ink-200/60',
-                  )}
-                  aria-pressed={variant?.id === v.id}
-                >
-                  {v.name}
-                </button>
-              ))}
+              {product.variants.map((v) => {
+                const variantOut = v.stock !== null && v.stock <= 0;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setVariant(v)}
+                    className={cn(
+                      'rounded-full px-5 py-2.5 text-sm font-medium transition-all min-h-[44px]',
+                      variant?.id === v.id
+                        ? 'bg-ink-900 text-white'
+                        : 'bg-ink-50 text-ink-900 hover:bg-ink-200/60',
+                      variantOut && 'line-through opacity-60',
+                    )}
+                    aria-pressed={variant?.id === v.id}
+                    aria-label={variantOut ? `${v.name} (agotado)` : v.name}
+                  >
+                    {v.name}
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
         )}
@@ -170,11 +206,16 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <button type="button" onClick={onAdd} className="btn-dark flex-1">
-            {added ? '✓ Agregado' : 'Agregar al carrito'}
+          <button
+            type="button"
+            onClick={onAdd}
+            disabled={isOutOfStock}
+            className="btn-dark flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isOutOfStock ? 'Agotado' : added ? '✓ Agregado' : 'Agregar al carrito'}
           </button>
           <a href={directWhatsApp} target="_blank" rel="noopener" className="btn-outline flex-1">
-            <WhatsAppIcon className="h-4 w-4 text-success" /> Pedir por WhatsApp
+            <WhatsAppIcon className="h-4 w-4 text-success" /> {isOutOfStock ? 'Avísame cuando vuelva' : 'Pedir por WhatsApp'}
           </a>
         </div>
 
@@ -185,6 +226,43 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
           <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Cambios sin complicaciones.</li>
         </ul>
       </div>
+
+      {/* Sticky CTA móvil */}
+      <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden border-t border-ink-200/60 bg-surface/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div className="container-page py-3 flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <div className="text-2xs text-ink-600">Precio</div>
+            <div className="font-display text-lg font-semibold tabular-nums leading-none">
+              {formatMoney(price, product.currency)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onAdd}
+            disabled={isOutOfStock}
+            className="btn-dark flex-1 min-h-[44px] px-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isOutOfStock ? 'Agotado' : added ? '✓ Agregado' : 'Carrito'}
+          </button>
+          <a
+            href={directWhatsApp}
+            target="_blank"
+            rel="noopener"
+            aria-label="Pedir por WhatsApp"
+            className="grid h-11 w-11 place-items-center rounded-full bg-success text-white"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+          </a>
+        </div>
+      </div>
+
+      <ProductLightbox
+        images={product.images}
+        open={lightboxOpen}
+        initialIndex={activeImg}
+        onClose={() => setLightboxOpen(false)}
+        productName={product.name}
+      />
     </article>
   );
 }

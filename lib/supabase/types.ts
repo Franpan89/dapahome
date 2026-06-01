@@ -50,8 +50,40 @@ export interface ProductWithRelations extends Product {
   variants: ProductVariant[];
 }
 
+export type BlogStatus = 'active' | 'draft' | 'archived';
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  cover_image_path: string | null;
+  body: string;
+  project_location: string | null;
+  product_ids: string[];
+  status: BlogStatus;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Installation {
+  id: string;
+  storage_path: string;
+  caption: string | null;
+  alt: string | null;
+  sort_order: number;
+}
+
+export interface PromoBar {
+  enabled: boolean;
+  text: string;
+  link: string;
+}
+
 export interface SiteSettings {
   whatsapp: { number: string; greeting: string };
   checkout_template: { intro: string; outro: string };
   hero: { eyebrow: string; title: string; subtitle: string };
+  promo_bar: PromoBar;
 }

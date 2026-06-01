@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useCart, cartTotals, cartItemKey } from '@/lib/cart/store';
+import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
 import { formatMoney } from '@/lib/format';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
 import type { SiteSettings } from '@/lib/supabase/types';
@@ -13,20 +13,23 @@ export function CartView({ settings }: { settings: SiteSettings }) {
   const remove = useCart((s) => s.remove);
   const setQty = useCart((s) => s.setQty);
   const clear = useCart((s) => s.clear);
+  const customer = useCart((s) => s.customer);
+  const setCustomer = useCart((s) => s.setCustomer);
   const { subtotal, count } = cartTotals(items);
 
-  const [name, setName] = useState('');
-  const [city, setCity] = useState('');
-  const [notes, setNotes] = useState('');
+  const [touched, setTouched] = useState({ name: false, city: false });
+
+  const errors = validate(customer);
+  const isValid = Object.values(errors).every((e) => !e);
 
   const previewMsg = useMemo(
     () =>
       buildWhatsAppMessage({
         items,
-        data: { name, city, notes },
+        data: customer,
         template: settings.checkout_template,
       }),
-    [items, name, city, notes, settings],
+    [items, customer, settings],
   );
 
   const href = whatsappHref(settings.whatsapp.number, previewMsg);
@@ -88,23 +91,54 @@ export function CartView({ settings }: { settings: SiteSettings }) {
           </div>
 
           <div className="space-y-3 border-t border-ink-200/60 pt-5">
-            <div>
-              <label htmlFor="name" className="label">Nombre completo</label>
-              <input id="name" value={name} onChange={(e) => setName(e.target.value)} className="input mt-1.5" placeholder="María Pérez" />
-            </div>
-            <div>
-              <label htmlFor="city" className="label">Ciudad</label>
-              <input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="input mt-1.5" placeholder="Cuenca" />
-            </div>
+            <Field
+              id="name"
+              label="Nombre completo"
+              required
+              value={customer.name}
+              onChange={(v) => setCustomer({ name: v })}
+              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
+              error={touched.name ? errors.name : undefined}
+              placeholder="María Pérez"
+              autoComplete="name"
+            />
+            <Field
+              id="city"
+              label="Ciudad"
+              required
+              value={customer.city}
+              onChange={(v) => setCustomer({ city: v })}
+              onBlur={() => setTouched((t) => ({ ...t, city: true }))}
+              error={touched.city ? errors.city : undefined}
+              placeholder="Cuenca"
+              autoComplete="address-level2"
+            />
             <div>
               <label htmlFor="notes" className="label">Notas (opcional)</label>
-              <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="input mt-1.5 min-h-[88px]" placeholder="Color preferido, fecha de entrega…" />
+              <textarea
+                id="notes"
+                value={customer.notes}
+                onChange={(e) => setCustomer({ notes: e.target.value })}
+                className="input mt-1.5 min-h-[88px]"
+                placeholder="Color preferido, fecha de entrega…"
+              />
             </div>
           </div>
 
-          <a href={href} target="_blank" rel="noopener" className="btn-primary w-full">
-            <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
-          </a>
+          {isValid ? (
+            <a href={href} target="_blank" rel="noopener" className="btn-primary w-full">
+              <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setTouched({ name: true, city: true })}
+              className="btn-primary w-full opacity-90"
+              aria-disabled="true"
+            >
+              <WhatsAppIcon className="h-4 w-4" /> Completa tus datos
+            </button>
+          )}
           <p className="text-2xs text-ink-600 text-center">
             Se abrirá WhatsApp con tu pedido pre-formateado. Confirmamos disponibilidad y envío por chat.
           </p>
@@ -117,6 +151,57 @@ export function CartView({ settings }: { settings: SiteSettings }) {
       </aside>
     </div>
   );
+}
+
+function Field({
+  id,
+  label,
+  value,
+  onChange,
+  onBlur,
+  required,
+  error,
+  placeholder,
+  autoComplete,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  onBlur?: () => void;
+  required?: boolean;
+  error?: string;
+  placeholder?: string;
+  autoComplete?: string;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="label">
+        {label} {required && <span className="text-danger">*</span>}
+      </label>
+      <input
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        autoComplete={autoComplete}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={`input mt-1.5 ${error ? 'border-danger focus:border-danger focus:ring-danger/15' : ''}`}
+        placeholder={placeholder}
+      />
+      {error && (
+        <p id={`${id}-error`} className="mt-1 text-2xs text-danger">{error}</p>
+      )}
+    </div>
+  );
+}
+
+function validate(c: CustomerData): { name?: string; city?: string } {
+  const errors: { name?: string; city?: string } = {};
+  if (c.name.trim().length < 2) errors.name = 'Cuéntanos tu nombre.';
+  if (c.city.trim().length < 2) errors.city = 'Necesitamos saber tu ciudad para coordinar el envío.';
+  return errors;
 }
 
 function BagIcon(props: React.SVGProps<SVGSVGElement>) {

@@ -19,6 +19,9 @@ export function AdminShell({ children, email }: { children: React.ReactNode; ema
           <AdminLink href="/admin">Dashboard</AdminLink>
           <AdminLink href="/admin/productos">Productos</AdminLink>
           <AdminLink href="/admin/categorias">Categorías</AdminLink>
+          <AdminLink href="/admin/instalaciones">Instalaciones</AdminLink>
+          <AdminLink href="/admin/blog">Blog</AdminLink>
+          <AdminLink href="/admin/newsletter">Newsletter</AdminLink>
           <AdminLink href="/admin/configuracion">Configuración</AdminLink>
           <div className="my-2 border-t border-ink-200/60" />
           <Link href="/" className="rounded-md px-3 py-2 hover:bg-ink-100">← Ver sitio</Link>
