@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect } from 'react';
 import { useCart, cartTotals, cartItemKey } from '@/lib/cart/store';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, TAX_LABEL, taxAmount, withTax } from '@/lib/format';
 import { cn } from '@/lib/cn';
 
 export function CartDrawer() {
@@ -145,12 +145,22 @@ export function CartDrawer() {
 
         {items.length > 0 && (
           <footer className="border-t border-ink-200/60 p-6 space-y-4">
-            <div className="flex items-baseline justify-between">
-              <span className="label">Subtotal</span>
-              <span className="font-mono text-xl tabular-nums">{formatMoney(subtotal)}</span>
+            <div className="space-y-1.5">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-ink-600">Subtotal</span>
+                <span className="font-mono tabular-nums">{formatMoney(subtotal)}</span>
+              </div>
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-ink-600">{TAX_LABEL}</span>
+                <span className="font-mono tabular-nums">+ {formatMoney(taxAmount(subtotal))}</span>
+              </div>
+              <div className="flex items-baseline justify-between pt-2 border-t border-ink-200/60">
+                <span className="label">Total con IVA</span>
+                <span className="font-mono text-xl tabular-nums font-semibold">{formatMoney(withTax(subtotal))}</span>
+              </div>
             </div>
             <p className="text-2xs text-ink-600">
-              El total final se confirma por WhatsApp con envío e impuestos.
+              Elige retiro en oficina (sin costo) o envío (+ {formatMoney(5)}) en el siguiente paso.
             </p>
             <Link href="/carrito" onClick={close} className="btn-primary w-full">
               Finalizar por WhatsApp

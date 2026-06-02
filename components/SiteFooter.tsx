@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { NewsletterForm } from '@/components/NewsletterForm';
 
 export function SiteFooter() {
@@ -20,9 +21,13 @@ export function SiteFooter() {
 
       <div className="container-page py-14 grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
-          <div className="font-display text-2xl font-semibold tracking-tight">
-            Dapa<span className="text-secondary">·</span>Home
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Dapa Home"
+            width={160}
+            height={160}
+            className="h-20 w-auto"
+          />
           <p className="mt-3 max-w-sm text-sm text-ink-600 text-pretty">
             Estudio y tienda de objetos para el hogar. Curaduría de iluminación, decoración y
             domótica con instalación a domicilio en Ecuador.

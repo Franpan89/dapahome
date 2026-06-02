@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
 import type { SiteSettings } from '@/lib/supabase/types';
 
@@ -21,6 +21,10 @@ export function CartView({ settings }: { settings: SiteSettings }) {
 
   const errors = validate(customer);
   const isValid = Object.values(errors).every((e) => !e);
+
+  const shippingFee = customer.delivery === 'delivery' ? DELIVERY_FEE : 0;
+  const iva = taxAmount(subtotal);
+  const total = withTax(subtotal) + shippingFee;
 
   const previewMsg = useMemo(
     () =>
@@ -85,9 +89,65 @@ export function CartView({ settings }: { settings: SiteSettings }) {
 
       <aside className="lg:sticky lg:top-24 self-start">
         <div className="card p-6 space-y-5">
-          <div className="flex items-baseline justify-between">
-            <span className="label">Subtotal estimado</span>
-            <span className="font-mono text-2xl tabular-nums">{formatMoney(subtotal)}</span>
+          <div>
+            <span className="label">Entrega</span>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setCustomer({ delivery: 'pickup' })}
+                aria-pressed={customer.delivery === 'pickup'}
+                className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                  customer.delivery === 'pickup'
+                    ? 'border-ink-900 bg-ink-900 text-white'
+                    : 'border-ink-200 hover:border-ink-400'
+                }`}
+              >
+                <div className="font-medium">Retiro en oficina</div>
+                <div className={`text-2xs ${customer.delivery === 'pickup' ? 'text-white/70' : 'text-ink-600'}`}>Sin costo</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomer({ delivery: 'delivery' })}
+                aria-pressed={customer.delivery === 'delivery'}
+                className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                  customer.delivery === 'delivery'
+                    ? 'border-ink-900 bg-ink-900 text-white'
+                    : 'border-ink-200 hover:border-ink-400'
+                }`}
+              >
+                <div className="font-medium">Envío a domicilio</div>
+                <div className={`text-2xs ${customer.delivery === 'delivery' ? 'text-white/70' : 'text-ink-600'}`}>
+                  + {formatMoney(DELIVERY_FEE)} recargo
+                </div>
+              </button>
+            </div>
+            {customer.delivery === 'pickup' && (
+              <p className="mt-2 text-2xs text-ink-600">{PICKUP_ADDRESS} · coordinamos hora por WhatsApp.</p>
+            )}
+          </div>
+
+          <div className="space-y-2 border-t border-ink-200/60 pt-4">
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-ink-600">Subtotal</span>
+              <span className="font-mono tabular-nums">{formatMoney(subtotal)}</span>
+            </div>
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-ink-600">{TAX_LABEL}</span>
+              <span className="font-mono tabular-nums">+ {formatMoney(iva)}</span>
+            </div>
+            <div className="flex items-baseline justify-between text-sm">
+              <span className="text-ink-600">{customer.delivery === 'delivery' ? 'Envío' : 'Retiro en oficina'}</span>
+              <span className="font-mono tabular-nums">
+                {shippingFee > 0 ? `+ ${formatMoney(shippingFee)}` : 'Gratis'}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between pt-3 border-t border-ink-200/60">
+              <span className="label">Total a pagar</span>
+              <span className="font-mono text-2xl tabular-nums font-semibold">{formatMoney(total)}</span>
+            </div>
+            {customer.delivery === 'delivery' && (
+              <p className="text-2xs text-ink-600">El recargo de envío cubre Cuenca. Otras ciudades se cotizan por WhatsApp.</p>
+            )}
           </div>
 
           <div className="space-y-3 border-t border-ink-200/60 pt-5">

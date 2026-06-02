@@ -59,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     '@type': 'Organization',
     name: 'Dapa Home',
     url: SITE_URL,
-    logo: `${SITE_URL}/icon.png`,
+    logo: `${SITE_URL}/logo.png`,
     sameAs: [] as string[],
     contactPoint: {
       '@type': 'ContactPoint',

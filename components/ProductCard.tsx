@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { imageUrl } from '@/lib/supabase/image';
 import type { Category, Product, ProductImage } from '@/lib/supabase/types';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, TAX_LABEL, withTax } from '@/lib/format';
 import { useCart } from '@/lib/cart/store';
 
 type CardProduct = Product & { images: ProductImage[]; category: Category | null };
@@ -87,8 +87,13 @@ export function ProductCard({ product, priority = false }: { product: CardProduc
             {product.name}
           </h3>
         </div>
-        <div className="flex-shrink-0 text-right font-display text-base font-semibold tabular-nums">
-          {formatMoney(product.base_price, product.currency)}
+        <div className="flex-shrink-0 text-right tabular-nums">
+          <div className="font-display text-base font-semibold leading-none">
+            {formatMoney(product.base_price, product.currency)}
+          </div>
+          <div className="mt-1 text-2xs text-ink-600">
+            + {TAX_LABEL} · {formatMoney(withTax(product.base_price), product.currency)}
+          </div>
         </div>
       </div>
     </Link>

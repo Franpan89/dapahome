@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useCart, cartTotals } from '@/lib/cart/store';
 
@@ -24,17 +25,16 @@ export function SiteHeader() {
         scrolled ? 'bg-ink-100/90 backdrop-blur border-b border-ink-200/60' : 'bg-transparent'
       }`}
     >
-      <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2" aria-label="Inicio Dapa Home">
-          <span
-            aria-hidden
-            className="grid h-9 w-9 place-items-center rounded-xl bg-ink-900 text-white font-display text-lg font-semibold"
-          >
-            d
-          </span>
-          <span className="font-display text-xl font-semibold tracking-tight">
-            Dapa Home
-          </span>
+      <div className="container-page flex h-20 items-center justify-between gap-4">
+        <Link href="/" className="flex items-center" aria-label="Inicio Dapa Home">
+          <Image
+            src="/logo.png"
+            alt="Dapa Home"
+            width={160}
+            height={160}
+            priority
+            className="h-14 w-auto md:h-16"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">

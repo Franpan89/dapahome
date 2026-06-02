@@ -15,10 +15,13 @@ export interface CartItem {
   quantity: number;
 }
 
+export type DeliveryMethod = 'pickup' | 'delivery';
+
 export interface CustomerData {
   name: string;
   city: string;
   notes: string;
+  delivery: DeliveryMethod;
 }
 
 interface CartState {
@@ -43,7 +46,7 @@ export const useCart = create<CartState>()(
     (set) => ({
       items: [],
       isOpen: false,
-      customer: { name: '', city: '', notes: '' },
+      customer: { name: '', city: '', notes: '', delivery: 'pickup' },
       setCustomer: (patch) => set((s) => ({ customer: { ...s.customer, ...patch } })),
       add: (item, qty = 1) =>
         set((s) => {
@@ -69,7 +72,7 @@ export const useCart = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
     }),
-    { name: 'dapa-cart-v1' },
+    { name: 'dapa-cart-v2' },
   ),
 );
 

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import NextLink from 'next/link';
 import { useMemo, useState } from 'react';
 import { imageUrl } from '@/lib/supabase/image';
-import { formatMoney } from '@/lib/format';
+import { formatMoney, TAX_LABEL, withTax } from '@/lib/format';
 import { useCart } from '@/lib/cart/store';
 import type { ProductWithRelations, ProductVariant } from '@/lib/supabase/types';
 import { cn } from '@/lib/cn';
@@ -136,9 +136,12 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
         <h1 className="font-display text-4xl md:text-5xl leading-[1.05] tracking-tight text-balance">
           {product.name}
         </h1>
-        <div className="flex items-baseline gap-3">
+        <div className="flex items-baseline gap-3 flex-wrap">
           <div className="font-display text-3xl font-semibold tabular-nums">
             {formatMoney(price, product.currency)}
+          </div>
+          <div className="text-sm text-ink-600 tabular-nums">
+            + {TAX_LABEL} = <span className="font-semibold text-ink-900">{formatMoney(withTax(price), product.currency)}</span>
           </div>
           {isOutOfStock && (
             <span className="rounded-full bg-danger/10 px-2.5 py-1 text-2xs font-medium text-danger">
@@ -231,9 +234,12 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
       <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden border-t border-ink-200/60 bg-surface/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div className="container-page py-3 flex items-center gap-3">
           <div className="flex-shrink-0">
-            <div className="text-2xs text-ink-600">Precio</div>
+            <div className="text-2xs text-ink-600">Precio + {TAX_LABEL}</div>
             <div className="font-display text-lg font-semibold tabular-nums leading-none">
-              {formatMoney(price, product.currency)}
+              {formatMoney(withTax(price), product.currency)}
+            </div>
+            <div className="text-2xs text-ink-600 tabular-nums mt-0.5">
+              {formatMoney(price, product.currency)} sin IVA
             </div>
           </div>
           <button
