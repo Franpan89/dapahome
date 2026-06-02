@@ -4,14 +4,16 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
 import { imageUrl } from '@/lib/supabase/image';
-import type { ProductImage } from '@/lib/supabase/types';
+import type { ProductImage, ProductVariant } from '@/lib/supabase/types';
 
 export function AdminImageManager({
   productId,
   images: initial,
+  variants = [],
 }: {
   productId: string;
   images: ProductImage[];
+  variants?: ProductVariant[];
 }) {
   const sb = createSupabaseBrowser();
   const [images, setImages] = useState<ProductImage[]>(
@@ -71,6 +73,11 @@ export function AdminImageManager({
     setImages((prev) => prev.map((i) => (i.id === id ? { ...i, alt } : i)));
   }
 
+  async function setVariant(id: string, variantId: string | null) {
+    await sb.from('product_images').update({ variant_id: variantId }).eq('id', id);
+    setImages((prev) => prev.map((i) => (i.id === id ? { ...i, variant_id: variantId } : i)));
+  }
+
   async function move(id: string, dir: -1 | 1) {
     const idx = images.findIndex((i) => i.id === id);
     const j = idx + dir;
@@ -112,6 +119,21 @@ export function AdminImageManager({
                 placeholder="Texto alternativo"
                 className="w-full text-xs px-2 py-1 border border-ink-200 rounded"
               />
+              {variants.length > 0 && (
+                <select
+                  value={img.variant_id ?? ''}
+                  onChange={(e) => setVariant(img.id, e.target.value || null)}
+                  className="w-full text-xs px-2 py-1 border border-ink-200 rounded bg-white"
+                  title="Variante asociada"
+                >
+                  <option value="">Imagen general</option>
+                  {variants.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="flex flex-wrap gap-1">
                 {!img.is_primary && (
                   <button onClick={() => setPrimary(img.id)} className="text-2xs px-2 py-1 rounded bg-ink-100 hover:bg-primary hover:text-white">Hacer principal</button>

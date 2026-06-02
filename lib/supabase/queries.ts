@@ -86,15 +86,16 @@ export async function listProducts(
   if (!isSupabaseConfigured()) return demoList(filters);
   try {
     const sb = await createSupabaseServer();
+    const categorySelect = filters.category ? 'category:categories!inner(*)' : 'category:categories(*)';
     let q = sb
       .from('products')
-      .select('*, category:categories(*), images:product_images(*)')
+      .select(`*, ${categorySelect}, images:product_images(*)`)
       .eq('status', 'active')
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false });
 
     if (filters.featured) q = q.eq('featured', true);
-    if (filters.category) q = q.eq('category.slug', filters.category);
+    if (filters.category) q = q.eq('categories.slug', filters.category);
     if (filters.q) q = q.ilike('search_text', `%${filters.q.toLowerCase()}%`);
     if (filters.limit) q = q.limit(filters.limit);
 
@@ -123,12 +124,13 @@ export async function searchCatalog(
 
   try {
     const sb = await createSupabaseServer();
+    const categorySelect = filters.category ? 'category:categories!inner(*)' : 'category:categories(*)';
     let q = sb
       .from('products')
-      .select('*, category:categories(*), images:product_images(*)', { count: 'exact' })
+      .select(`*, ${categorySelect}, images:product_images(*)`, { count: 'exact' })
       .eq('status', 'active');
 
-    if (filters.category) q = q.eq('category.slug', filters.category);
+    if (filters.category) q = q.eq('categories.slug', filters.category);
     if (filters.q) q = q.ilike('search_text', `%${filters.q.toLowerCase()}%`);
     if (typeof filters.priceMin === 'number') q = q.gte('base_price', filters.priceMin);
     if (typeof filters.priceMax === 'number') q = q.lte('base_price', filters.priceMax);

@@ -88,7 +88,7 @@ export default async function ProductEditorPage({ params }: { params: Promise<{ 
         <>
           <section className="mt-10">
             <h2 className="font-display text-xl mb-3">Imágenes</h2>
-            <AdminImageManager productId={product.id} images={product.images ?? []} />
+            <AdminImageManager productId={product.id} images={product.images ?? []} variants={product.variants ?? []} />
           </section>
           <section className="mt-10">
             <h2 className="font-display text-xl mb-3">Variantes</h2>

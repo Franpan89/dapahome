@@ -13,6 +13,7 @@ export interface Category {
 export interface ProductImage {
   id: string;
   product_id: string;
+  variant_id: string | null;
   storage_path: string;
   alt: string | null;
   sort_order: number;

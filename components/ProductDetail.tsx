@@ -12,8 +12,12 @@ import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage'
 import { ProductLightbox } from '@/components/ProductLightbox';
 
 export function ProductDetail({ product }: { product: ProductWithRelations }) {
-  const [activeImg, setActiveImg] = useState(0);
-  const [variant, setVariant] = useState<ProductVariant | null>(product.variants[0] ?? null);
+  const initialVariant = product.variants[0] ?? null;
+  const initialVariantImgIdx = initialVariant
+    ? product.images.findIndex((i) => i.variant_id === initialVariant.id)
+    : -1;
+  const [activeImg, setActiveImg] = useState(initialVariantImgIdx >= 0 ? initialVariantImgIdx : 0);
+  const [variant, setVariant] = useState<ProductVariant | null>(initialVariant);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -21,6 +25,12 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
 
   const price = variant?.price_override ?? product.base_price;
   const mainImage = product.images[activeImg] ?? product.images[0];
+
+  function selectVariant(v: ProductVariant) {
+    setVariant(v);
+    const idx = product.images.findIndex((i) => i.variant_id === v.id);
+    if (idx >= 0) setActiveImg(idx);
+  }
 
   const stock = variant?.stock ?? null;
   const isOutOfStock = stock !== null && stock <= 0;
@@ -171,7 +181,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
                   <button
                     key={v.id}
                     type="button"
-                    onClick={() => setVariant(v)}
+                    onClick={() => selectVariant(v)}
                     className={cn(
                       'rounded-full px-5 py-2.5 text-sm font-medium transition-all min-h-[44px]',
                       variant?.id === v.id
