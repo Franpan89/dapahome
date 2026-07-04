@@ -118,8 +118,10 @@ export function CartDrawer() {
                         >
                           {it.name}
                         </Link>
-                        {it.variantLabel && (
-                          <div className="mt-0.5 text-xs text-ink-600">{it.variantLabel}</div>
+                        {(it.variantLabel || it.colorLabel) && (
+                          <div className="mt-0.5 text-xs text-ink-600">
+                            {[it.variantLabel, it.colorLabel].filter(Boolean).join(' · ')}
+                          </div>
                         )}
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <div className="inline-flex items-center rounded-md border border-ink-200">

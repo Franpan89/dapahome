@@ -25,6 +25,7 @@ export function ProductCard({ product, priority = false }: { product: CardProduc
       slug: product.slug,
       name: product.name,
       variantLabel: null,
+      colorLabel: null,
       unitPrice: product.base_price,
       currency: product.currency,
       imageUrl: primary ? imageUrl(primary.storage_path) : null,

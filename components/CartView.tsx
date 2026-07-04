@@ -74,7 +74,11 @@ export function CartView({ settings }: { settings: SiteSettings }) {
                   <Link href={`/producto/${it.slug}`} className="font-display text-lg leading-tight hover:text-primary">
                     {it.name}
                   </Link>
-                  {it.variantLabel && <div className="text-xs text-ink-600 mt-0.5">{it.variantLabel}</div>}
+                  {(it.variantLabel || it.colorLabel) && (
+                    <div className="text-xs text-ink-600 mt-0.5">
+                      {[it.variantLabel, it.colorLabel].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
                   <div className="mt-3 flex items-center gap-4">
                     <div className="inline-flex items-center rounded-md border border-ink-200">
                       <button onClick={() => setQty(k, it.quantity - 1)} className="h-9 w-9 grid place-items-center text-ink-600 hover:text-primary" aria-label="Reducir cantidad">−</button>

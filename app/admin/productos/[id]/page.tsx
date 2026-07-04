@@ -4,6 +4,7 @@ import { AdminShell } from '@/components/AdminShell';
 import { saveProductAction, deleteProductAction } from '@/app/admin/actions';
 import { AdminImageManager } from '@/components/admin/AdminImageManager';
 import { AdminVariantManager } from '@/components/admin/AdminVariantManager';
+import { AdminColorManager } from '@/components/admin/AdminColorManager';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,17 @@ export default async function ProductEditorPage({ params }: { params: Promise<{ 
   if (!isNew && !productRes.data) notFound();
   const product: any = productRes.data;
   const categories = categoriesRes.data ?? [];
+  // product_colors puede no existir aún si no se ha corrido la migración 0007;
+  // se consulta aparte para no romper el editor del producto en ese caso.
+  let colors: any[] = [];
+  if (!isNew) {
+    try {
+      const res = await supabase.from('product_colors').select('*').eq('product_id', id).order('sort_order');
+      colors = res.data ?? [];
+    } catch {
+      colors = [];
+    }
+  }
 
   return (
     <AdminShell email={user.email}>
@@ -91,8 +103,16 @@ export default async function ProductEditorPage({ params }: { params: Promise<{ 
             <AdminImageManager productId={product.id} images={product.images ?? []} variants={product.variants ?? []} />
           </section>
           <section className="mt-10">
-            <h2 className="font-display text-xl mb-3">Variantes</h2>
+            <h2 className="font-display text-xl mb-3">Tamaños (variantes)</h2>
+            <p className="text-sm text-ink-600 mb-3">Cada tamaño puede tener su propio precio, SKU y stock.</p>
             <AdminVariantManager productId={product.id} variants={product.variants ?? []} />
+          </section>
+          <section className="mt-10">
+            <h2 className="font-display text-xl mb-3">Colores</h2>
+            <p className="text-sm text-ink-600 mb-3">
+              Opciones de color que el cliente elige sin afectar el precio ni el stock — solo se registran en el pedido.
+            </p>
+            <AdminColorManager productId={product.id} colors={colors} />
           </section>
         </>
       )}

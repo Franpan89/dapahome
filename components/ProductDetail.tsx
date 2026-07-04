@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { imageUrl } from '@/lib/supabase/image';
 import { formatMoney, TAX_LABEL, withTax } from '@/lib/format';
 import { useCart } from '@/lib/cart/store';
-import type { ProductWithRelations, ProductVariant } from '@/lib/supabase/types';
+import type { ProductWithRelations, ProductVariant, ProductColor } from '@/lib/supabase/types';
 import { cn } from '@/lib/cn';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
 import { ProductLightbox } from '@/components/ProductLightbox';
@@ -19,6 +19,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
     : -1;
   const [activeImg, setActiveImg] = useState(initialVariantImgIdx >= 0 ? initialVariantImgIdx : 0);
   const [variant, setVariant] = useState<ProductVariant | null>(initialVariant);
+  const [color, setColor] = useState<ProductColor | null>(product.colors[0] ?? null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -45,6 +46,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
         slug: product.slug,
         name: product.name,
         variantLabel: variant?.name ?? null,
+        colorLabel: color?.name ?? null,
         unitPrice: price,
         currency: product.currency,
         imageUrl: product.images[activeImg]
@@ -57,7 +59,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
     );
     setAdded(true);
     toast.success(`${product.name} agregado al carrito`, {
-      description: variant?.name,
+      description: [variant?.name, color?.name].filter(Boolean).join(' · ') || undefined,
     });
     setTimeout(() => setAdded(false), 1800);
   };
@@ -71,6 +73,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
           slug: product.slug,
           name: product.name,
           variantLabel: variant?.name ?? null,
+          colorLabel: color?.name ?? null,
           unitPrice: price,
           currency: product.currency,
           imageUrl: null,
@@ -84,7 +87,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
       },
     });
     return whatsappHref(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '593998001894', msg);
-  }, [product, variant, qty, price]);
+  }, [product, variant, color, qty, price]);
 
   return (
     <article className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16 items-start">
@@ -181,7 +184,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
 
         {product.variants.length > 0 && (
           <fieldset>
-            <legend className="label mb-3">Variante</legend>
+            <legend className="label mb-3">Tamaño</legend>
             <div className="flex flex-wrap gap-2">
               {product.variants.map((v) => {
                 const variantOut = v.stock !== null && v.stock <= 0;
@@ -204,6 +207,37 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
                   </button>
                 );
               })}
+            </div>
+          </fieldset>
+        )}
+
+        {product.colors.length > 0 && (
+          <fieldset>
+            <legend className="label mb-3">
+              Color{color && <span className="ml-1.5 normal-case text-ink-900 font-medium">· {color.name}</span>}
+            </legend>
+            <div className="flex flex-wrap gap-2.5">
+              {product.colors.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={cn(
+                    'relative h-10 w-10 rounded-full ring-2 ring-offset-2 transition-all',
+                    color?.id === c.id ? 'ring-ink-900' : 'ring-transparent hover:ring-ink-300',
+                  )}
+                  style={{ backgroundColor: c.hex ?? '#E5E0D8' }}
+                  aria-pressed={color?.id === c.id}
+                  aria-label={c.name}
+                  title={c.name}
+                >
+                  {!c.hex && (
+                    <span className="absolute inset-0 grid place-items-center text-2xs font-medium text-ink-700">
+                      {c.name.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           </fieldset>
         )}

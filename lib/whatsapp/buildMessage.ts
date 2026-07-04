@@ -25,8 +25,9 @@ export function buildWhatsAppMessage({ items, data, template, currency = 'USD' }
   lines.push(template.intro);
   lines.push('');
   for (const it of items) {
-    const variant = it.variantLabel ? ` (${it.variantLabel})` : '';
-    lines.push(`• ${it.name}${variant} x${it.quantity} — ${fmt(it.unitPrice, it.currency)} c/u`);
+    const attrs = [it.variantLabel, it.colorLabel].filter(Boolean).join(', ');
+    const suffix = attrs ? ` (${attrs})` : '';
+    lines.push(`• ${it.name}${suffix} x${it.quantity} — ${fmt(it.unitPrice, it.currency)} c/u`);
     lines.push(`  ${SITE}/producto/${it.slug}`);
   }
   const subtotal = items.reduce((a, i) => a + i.unitPrice * i.quantity, 0);

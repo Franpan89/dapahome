@@ -92,6 +92,13 @@ export const DEMO_PRODUCT_DETAIL = (slug: string): ProductWithRelations | null =
           { id: 'v5', product_id: base.id, name: 'Grande',  options: { size: 'L' }, sku: 'LUNA-L', price_override: 44, stock: null, sort_order: 3 },
         ]
       : [],
+    colors: slug === 'macetero-luna'
+      ? [
+          { id: 'col1', product_id: base.id, name: 'Blanco', hex: '#F5F2EC', sort_order: 1 },
+          { id: 'col2', product_id: base.id, name: 'Terracota', hex: '#C4602F', sort_order: 2 },
+          { id: 'col3', product_id: base.id, name: 'Verde salvia', hex: '#8A9A7E', sort_order: 3 },
+        ]
+      : [],
   };
 };
 

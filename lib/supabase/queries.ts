@@ -14,6 +14,7 @@ import type {
   Category,
   Installation,
   Product,
+  ProductColor,
   ProductImage,
   ProductVariant,
   ProductWithRelations,
@@ -337,6 +338,19 @@ export async function getProductBySlug(
     const product = data as ProductWithRelations;
     product.images = (product.images ?? []).sort((a, b) => a.sort_order - b.sort_order);
     product.variants = (product.variants ?? []).sort((a: ProductVariant, b: ProductVariant) => a.sort_order - b.sort_order);
+    // Fetch por separado: la tabla product_colors puede no existir todavía en
+    // proyectos donde no se ha corrido la migración 0007. Si falla, el
+    // producto sigue funcionando sin colores en vez de romper la página.
+    try {
+      const { data: colors } = await sb
+        .from('product_colors')
+        .select('*')
+        .eq('product_id', product.id)
+        .order('sort_order');
+      product.colors = (colors ?? []) as ProductColor[];
+    } catch {
+      product.colors = [];
+    }
     return product;
   } catch {
     return DEMO_PRODUCT_DETAIL(slug);

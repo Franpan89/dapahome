@@ -9,6 +9,7 @@ export interface CartItem {
   slug: string;
   name: string;
   variantLabel: string | null;
+  colorLabel: string | null;
   unitPrice: number;
   currency: string;
   imageUrl: string | null;
@@ -38,8 +39,8 @@ interface CartState {
   setCustomer: (patch: Partial<CustomerData>) => void;
 }
 
-const keyOf = (it: { productId: string; variantId: string | null }) =>
-  `${it.productId}::${it.variantId ?? '-'}`;
+const keyOf = (it: { productId: string; variantId: string | null; colorLabel?: string | null }) =>
+  `${it.productId}::${it.variantId ?? '-'}::${it.colorLabel ?? '-'}`;
 
 export const useCart = create<CartState>()(
   persist(

@@ -45,10 +45,19 @@ export interface Product {
   updated_at: string;
 }
 
+export interface ProductColor {
+  id: string;
+  product_id: string;
+  name: string;
+  hex: string | null;
+  sort_order: number;
+}
+
 export interface ProductWithRelations extends Product {
   category: Category | null;
   images: ProductImage[];
   variants: ProductVariant[];
+  colors: ProductColor[];
 }
 
 export type BlogStatus = 'active' | 'draft' | 'archived';
