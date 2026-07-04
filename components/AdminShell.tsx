@@ -20,6 +20,7 @@ export function AdminShell({ children, email }: { children: React.ReactNode; ema
           <AdminLink href="/admin/productos">Productos</AdminLink>
           <AdminLink href="/admin/categorias">Categorías</AdminLink>
           <AdminLink href="/admin/instalaciones">Instalaciones</AdminLink>
+          <AdminLink href="/admin/testimonios">Testimonios</AdminLink>
           <AdminLink href="/admin/blog">Blog</AdminLink>
           <AdminLink href="/admin/newsletter">Newsletter</AdminLink>
           <AdminLink href="/admin/configuracion">Configuración</AdminLink>

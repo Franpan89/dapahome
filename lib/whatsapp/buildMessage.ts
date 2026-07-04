@@ -18,6 +18,8 @@ export interface BuildMessageOpts {
 const fmt = (n: number, currency = 'USD') =>
   new Intl.NumberFormat('es-EC', { style: 'currency', currency }).format(n);
 
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dapahome.ec').replace(/\/$/, '');
+
 export function buildWhatsAppMessage({ items, data, template, currency = 'USD' }: BuildMessageOpts) {
   const lines: string[] = [];
   lines.push(template.intro);
@@ -25,6 +27,7 @@ export function buildWhatsAppMessage({ items, data, template, currency = 'USD' }
   for (const it of items) {
     const variant = it.variantLabel ? ` (${it.variantLabel})` : '';
     lines.push(`• ${it.name}${variant} x${it.quantity} — ${fmt(it.unitPrice, it.currency)} c/u`);
+    lines.push(`  ${SITE}/producto/${it.slug}`);
   }
   const subtotal = items.reduce((a, i) => a + i.unitPrice * i.quantity, 0);
   const delivery: DeliveryMethod = data.delivery ?? 'pickup';

@@ -33,7 +33,7 @@ export default function AboutPage() {
           proveedor aliado para que tengas todo lo que necesita tu hogar inteligente en un solo lugar.
         </p>
 
-        <section id="diseno" className="mt-16">
+        <section id="mayoristas" className="mt-16 scroll-mt-24">
           <div className="label">Para diseñadores</div>
           <h2 className="mt-2 font-display text-3xl tracking-tight">Programa de aliados</h2>
           <p className="mt-3 text-ink-600">

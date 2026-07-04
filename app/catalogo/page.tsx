@@ -1,9 +1,12 @@
+import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryPills } from '@/components/CategoryPills';
 import { CatalogSearch } from '@/components/CatalogSearch';
 import { CatalogToolbar, CatalogPagination } from '@/components/CatalogToolbar';
 import { getCategories, searchCatalog } from '@/lib/supabase/queries';
 import type { CatalogSort } from '@/lib/supabase/queries';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dapahome.ec';
 
 export const revalidate = 60;
 
@@ -45,8 +48,23 @@ export default async function CatalogPage({ searchParams }: Props) {
     }),
   ]);
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/catalogo` },
+    ],
+  };
+
   return (
     <div className="container-page pt-8 pb-24">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <nav aria-label="Migas" className="text-2xs uppercase tracking-wider text-ink-600 mb-6">
+        <Link href="/" className="hover:text-primary">Inicio</Link>
+        <span className="mx-2">/</span>
+        <span className="text-ink-900">Catálogo</span>
+      </nav>
       <header className="mb-6">
         <div className="label">Catálogo</div>
         <h1 className="mt-2 font-display text-4xl md:text-5xl tracking-tight">

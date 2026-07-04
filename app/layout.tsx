@@ -3,7 +3,7 @@ import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { CartDrawer } from '@/components/CartDrawer';
+import { LazyCartDrawer } from '@/components/LazyCartDrawer';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { PromoBar } from '@/components/PromoBar';
 import { getSettings } from '@/lib/supabase/queries';
@@ -86,7 +86,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SiteHeader />
         <main id="contenido" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
         <SiteFooter />
-        <CartDrawer />
+        <LazyCartDrawer />
         <FloatingWhatsApp number={settings.whatsapp.number} greeting={settings.whatsapp.greeting} />
       </body>
     </html>

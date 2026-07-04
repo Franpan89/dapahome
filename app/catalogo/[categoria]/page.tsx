@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryPills } from '@/components/CategoryPills';
@@ -6,6 +7,8 @@ import { CatalogSearch } from '@/components/CatalogSearch';
 import { CatalogToolbar, CatalogPagination } from '@/components/CatalogToolbar';
 import { getCategories, searchCatalog } from '@/lib/supabase/queries';
 import type { CatalogSort } from '@/lib/supabase/queries';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dapahome.ec';
 
 export const revalidate = 60;
 
@@ -55,8 +58,26 @@ export default async function CategoryPage({
   const cat = categories.find((c) => c.slug === categoria);
   if (!cat) notFound();
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/catalogo` },
+      { '@type': 'ListItem', position: 3, name: cat.name, item: `${SITE_URL}/catalogo/${cat.slug}` },
+    ],
+  };
+
   return (
     <div className="container-page pt-8 pb-24">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <nav aria-label="Migas" className="text-2xs uppercase tracking-wider text-ink-600 mb-6">
+        <Link href="/" className="hover:text-primary">Inicio</Link>
+        <span className="mx-2">/</span>
+        <Link href="/catalogo" className="hover:text-primary">Catálogo</Link>
+        <span className="mx-2">/</span>
+        <span className="text-ink-900">{cat.name}</span>
+      </nav>
       <header className="mb-6">
         <div className="label">Categoría</div>
         <h1 className="mt-2 font-display text-4xl md:text-5xl tracking-tight">{cat.name}</h1>

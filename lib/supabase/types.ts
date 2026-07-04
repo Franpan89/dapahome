@@ -76,6 +76,21 @@ export interface Installation {
   sort_order: number;
 }
 
+export type TestimonialStatus = 'active' | 'draft';
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string | null;
+  body: string;
+  photo_path: string | null;
+  rating: number;
+  featured: boolean;
+  sort_order: number;
+  status: TestimonialStatus;
+  created_at: string;
+}
+
 export interface PromoBar {
   enabled: boolean;
   text: string;

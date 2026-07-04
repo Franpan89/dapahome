@@ -17,7 +17,7 @@ export const DEMO_CATEGORIES: Category[] = [
 ];
 
 const IMG = (path: string, alt: string, id: string, primary = true): ProductImage => ({
-  id, product_id: '', storage_path: path, alt, sort_order: 0, is_primary: primary,
+  id, product_id: '', variant_id: null, storage_path: path, alt, sort_order: 0, is_primary: primary,
 });
 
 const baseProduct = (
@@ -94,6 +94,45 @@ export const DEMO_PRODUCT_DETAIL = (slug: string): ProductWithRelations | null =
       : [],
   };
 };
+
+export const DEMO_TESTIMONIALS: import('./types').Testimonial[] = [
+  {
+    id: 't1',
+    name: 'María José Andrade',
+    role: 'Interiorista — Quito',
+    body: 'Llevamos tres proyectos con Dapa Home y siempre superan las expectativas. La calidad de las lámparas colgantes es impresionante y el servicio es impecable.',
+    photo_path: null,
+    rating: 5,
+    featured: true,
+    sort_order: 0,
+    status: 'active',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 't2',
+    name: 'Carlos Proaño',
+    role: 'Arquitecto — Guayaquil',
+    body: 'Los maceteros de cerámica que pedí para un proyecto comercial fueron un éxito total. Mis clientes quedaron encantados y ya me pidieron más para su siguiente local.',
+    photo_path: null,
+    rating: 5,
+    featured: true,
+    sort_order: 1,
+    status: 'active',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 't3',
+    name: 'Sofía Benalcázar',
+    role: 'Propietaria — Cuenca',
+    body: 'Remodelé mi sala con la lámpara Aria y cambió completamente el ambiente. La atención fue súper rápida y llegó bien empacada. Totalmente recomendada.',
+    photo_path: null,
+    rating: 5,
+    featured: false,
+    sort_order: 2,
+    status: 'active',
+    created_at: new Date().toISOString(),
+  },
+];
 
 export const DEMO_SETTINGS: SiteSettings = {
   whatsapp: { number: '593998001894', greeting: '¡Hola Dapa Home! 👋' },

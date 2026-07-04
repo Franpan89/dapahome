@@ -46,7 +46,11 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
         variantLabel: variant?.name ?? null,
         unitPrice: price,
         currency: product.currency,
-        imageUrl: product.images[0] ? imageUrl(product.images[0].storage_path) : null,
+        imageUrl: product.images[activeImg]
+          ? imageUrl(product.images[activeImg].storage_path)
+          : product.images[0]
+          ? imageUrl(product.images[0].storage_path)
+          : null,
       },
       qty,
     );

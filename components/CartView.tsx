@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
 import { formatMoney, TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
@@ -17,6 +18,7 @@ export function CartView({ settings }: { settings: SiteSettings }) {
   const setCustomer = useCart((s) => s.setCustomer);
   const { subtotal, count } = cartTotals(items);
 
+  const router = useRouter();
   const [touched, setTouched] = useState({ name: false, city: false });
 
   const errors = validate(customer);
@@ -37,6 +39,12 @@ export function CartView({ settings }: { settings: SiteSettings }) {
   );
 
   const href = whatsappHref(settings.whatsapp.number, previewMsg);
+
+  const handleCheckout = useCallback(() => {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    clear();
+    router.push('/gracias');
+  }, [href, clear, router]);
 
   if (count === 0) {
     return (
@@ -186,9 +194,9 @@ export function CartView({ settings }: { settings: SiteSettings }) {
           </div>
 
           {isValid ? (
-            <a href={href} target="_blank" rel="noopener" className="btn-primary w-full">
+            <button type="button" onClick={handleCheckout} className="btn-primary w-full">
               <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
-            </a>
+            </button>
           ) : (
             <button
               type="button"

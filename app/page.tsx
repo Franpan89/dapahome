@@ -7,18 +7,20 @@ import {
   getSettings,
   listInstallations,
   listProducts,
+  listTestimonials,
   imageUrl,
 } from '@/lib/supabase/queries';
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [settings, categories, featured, latest, installationsDb] = await Promise.all([
+  const [settings, categories, featured, latest, installationsDb, testimonials] = await Promise.all([
     getSettings(),
     getCategories(),
     listProducts({ featured: true, limit: 4 }),
     listProducts({ limit: 8 }),
     listInstallations(),
+    listTestimonials(),
   ]);
 
   const installations = installationsDb.length
@@ -188,6 +190,54 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ============== TESTIMONIOS ============== */}
+      {testimonials.length > 0 && (
+        <section className="container-page mb-20">
+          <div className="mb-10">
+            <div className="label">Clientes felices</div>
+            <h2 className="mt-2 font-display text-3xl md:text-4xl tracking-tight">
+              Lo que dicen de nosotros
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((t) => (
+              <figure
+                key={t.id}
+                className="card p-6 flex flex-col gap-4 bg-surface rounded-2xl border border-ink-200/60"
+              >
+                <div className="flex gap-0.5" aria-label={`${t.rating} de 5 estrellas`}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <StarIcon key={i} filled={i < t.rating} />
+                  ))}
+                </div>
+                <blockquote className="flex-1 text-ink-800 text-pretty leading-relaxed text-sm md:text-base">
+                  &ldquo;{t.body}&rdquo;
+                </blockquote>
+                <figcaption className="flex items-center gap-3 pt-4 border-t border-ink-100">
+                  {t.photo_path ? (
+                    <Image
+                      src={imageUrl(t.photo_path)}
+                      alt={t.name}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-accent grid place-items-center text-primary font-display font-semibold text-sm flex-shrink-0">
+                      {t.name[0]}
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-medium text-sm">{t.name}</div>
+                    {t.role && <div className="text-xs text-ink-600">{t.role}</div>}
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ============== CTA WHATSAPP ============== */}
       <section className="container-page mb-20">
         <div className="relative overflow-hidden rounded-3xl bg-primary text-white p-8 md:p-14">
@@ -232,6 +282,20 @@ function ArrowIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
       <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden>
+      <path
+        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth={filled ? 0 : 1.5}
+        className={filled ? 'text-secondary' : 'text-ink-300'}
+      />
     </svg>
   );
 }

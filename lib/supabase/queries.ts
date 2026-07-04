@@ -6,6 +6,7 @@ import {
   DEMO_PRODUCTS,
   DEMO_PRODUCT_DETAIL,
   DEMO_SETTINGS,
+  DEMO_TESTIMONIALS,
   isSupabaseConfigured,
 } from './demo';
 import type {
@@ -17,6 +18,7 @@ import type {
   ProductVariant,
   ProductWithRelations,
   SiteSettings,
+  Testimonial,
 } from './types';
 
 export const getCategories = cache(async (): Promise<Category[]> => {
@@ -61,6 +63,35 @@ export const listInstallations = cache(async (): Promise<Installation[]> => {
   }
 });
 
+export const listTestimonials = cache(async (): Promise<Testimonial[]> => {
+  if (!isSupabaseConfigured()) return DEMO_TESTIMONIALS;
+  try {
+    const sb = await createSupabaseServer();
+    const { data } = await sb
+      .from('testimonials')
+      .select('*')
+      .eq('status', 'active')
+      .order('sort_order', { ascending: true });
+    return (data ?? []) as Testimonial[];
+  } catch {
+    return DEMO_TESTIMONIALS;
+  }
+});
+
+export const listAllTestimonials = cache(async (): Promise<Testimonial[]> => {
+  if (!isSupabaseConfigured()) return DEMO_TESTIMONIALS;
+  try {
+    const sb = await createSupabaseServer();
+    const { data } = await sb
+      .from('testimonials')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    return (data ?? []) as Testimonial[];
+  } catch {
+    return DEMO_TESTIMONIALS;
+  }
+});
+
 export interface ListProductsFilters {
   category?: string;
   q?: string;
@@ -86,16 +117,18 @@ export async function listProducts(
   if (!isSupabaseConfigured()) return demoList(filters);
   try {
     const sb = await createSupabaseServer();
-    const categorySelect = filters.category ? 'category:categories!inner(*)' : 'category:categories(*)';
     let q = sb
       .from('products')
-      .select(`*, ${categorySelect}, images:product_images(*)`)
+      .select('*, category:categories(*), images:product_images(*)')
       .eq('status', 'active')
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false });
 
     if (filters.featured) q = q.eq('featured', true);
-    if (filters.category) q = q.eq('categories.slug', filters.category);
+    if (filters.category) {
+      const { data: cat } = await sb.from('categories').select('id').eq('slug', filters.category).maybeSingle();
+      if (cat) q = q.eq('category_id', cat.id);
+    }
     if (filters.q) q = q.ilike('search_text', `%${filters.q.toLowerCase()}%`);
     if (filters.limit) q = q.limit(filters.limit);
 
@@ -124,13 +157,15 @@ export async function searchCatalog(
 
   try {
     const sb = await createSupabaseServer();
-    const categorySelect = filters.category ? 'category:categories!inner(*)' : 'category:categories(*)';
     let q = sb
       .from('products')
-      .select(`*, ${categorySelect}, images:product_images(*)`, { count: 'exact' })
+      .select('*, category:categories(*), images:product_images(*)', { count: 'exact' })
       .eq('status', 'active');
 
-    if (filters.category) q = q.eq('categories.slug', filters.category);
+    if (filters.category) {
+      const { data: cat } = await sb.from('categories').select('id').eq('slug', filters.category).maybeSingle();
+      if (cat) q = q.eq('category_id', cat.id);
+    }
     if (filters.q) q = q.ilike('search_text', `%${filters.q.toLowerCase()}%`);
     if (typeof filters.priceMin === 'number') q = q.gte('base_price', filters.priceMin);
     if (typeof filters.priceMax === 'number') q = q.lte('base_price', filters.priceMax);
