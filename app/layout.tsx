@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Saltar al contenido
         </a>
         <PromoBar promo={settings.promo_bar} />
-        <SiteHeader />
+        <SiteHeader number={settings.whatsapp.number} greeting={settings.whatsapp.greeting} />
         <main id="contenido" tabIndex={-1} className="flex-1 focus:outline-none">
           <PageTransition>{children}</PageTransition>
         </main>
