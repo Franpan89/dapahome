@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
 import { imageUrl } from '@/lib/supabase/image';
 import { revalidateHomeAction } from '@/app/admin/actions';
@@ -71,7 +72,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
     const ext = pendingPhoto.name.split('.').pop() ?? 'jpg';
     const path = `testimonials/${id}/${crypto.randomUUID()}.${ext}`;
     const { error } = await sb.storage.from('products').upload(path, pendingPhoto, { upsert: false });
-    if (error) { alert('Error subiendo foto: ' + error.message); return oldPath; }
+    if (error) { toast.error('Error subiendo foto: ' + error.message); return oldPath; }
     if (oldPath && !oldPath.startsWith('http')) {
       await sb.storage.from('products').remove([oldPath]);
     }
@@ -80,7 +81,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
 
   async function saveCreate() {
     if (!form.name.trim() || !form.body.trim()) {
-      alert('Nombre y testimonio son obligatorios.');
+      toast.error('Nombre y testimonio son obligatorios.');
       return;
     }
     setSaving(true);
@@ -98,7 +99,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
         })
         .select('*')
         .single();
-      if (error) { alert(error.message); return; }
+      if (error) { toast.error(error.message); return; }
       const newItem = data as Testimonial;
       const photo_path = await uploadPhoto(newItem.id, null);
       if (photo_path !== null) {
@@ -110,6 +111,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
       setPendingPhoto(null);
       setPhotoPreview(null);
       revalidateHomeAction();
+      toast.success('Testimonio creado');
     } finally {
       setSaving(false);
     }
@@ -118,7 +120,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
   async function saveEdit() {
     if (!editingId) return;
     if (!form.name.trim() || !form.body.trim()) {
-      alert('Nombre y testimonio son obligatorios.');
+      toast.error('Nombre y testimonio son obligatorios.');
       return;
     }
     setSaving(true);
@@ -142,6 +144,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
       setPendingPhoto(null);
       setPhotoPreview(null);
       revalidateHomeAction();
+      toast.success('Testimonio actualizado');
     } finally {
       setSaving(false);
     }
@@ -157,6 +160,7 @@ export function AdminTestimonialsManager({ items: initial }: { items: Testimonia
     setItems((prev) => prev.filter((i) => i.id !== id));
     if (editingId === id) cancel();
     revalidateHomeAction();
+    toast.success('Testimonio eliminado');
   }
 
   async function move(id: string, dir: -1 | 1) {

@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
 import './globals.css';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { LazyCartDrawer } from '@/components/LazyCartDrawer';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { PromoBar } from '@/components/PromoBar';
+import { PageTransition } from '@/components/motion/PageTransition';
 import { getSettings } from '@/lib/supabase/queries';
 
 const display = Bricolage_Grotesque({
@@ -84,10 +86,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
         <PromoBar promo={settings.promo_bar} />
         <SiteHeader />
-        <main id="contenido" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
+        <main id="contenido" tabIndex={-1} className="flex-1 focus:outline-none">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <SiteFooter />
         <LazyCartDrawer />
         <FloatingWhatsApp number={settings.whatsapp.number} greeting={settings.whatsapp.greeting} />
+        <Toaster
+          position="top-center"
+          richColors
+          toastOptions={{
+            style: {
+              fontFamily: 'var(--font-sans)',
+              borderRadius: '14px',
+            },
+          }}
+        />
       </body>
     </html>
   );

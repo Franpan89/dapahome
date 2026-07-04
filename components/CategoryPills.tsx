@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import type { Category } from '@/lib/supabase/types';
+import { cn } from '@/lib/cn';
 
 export function CategoryPills({ categories }: { categories: Category[] }) {
   const pathname = usePathname();
@@ -28,8 +30,21 @@ export function CategoryPills({ categories }: { categories: Category[] }) {
 
 function Pill({ href, active, children }: { href: string; active?: boolean; children: React.ReactNode }) {
   return (
-    <Link href={href} className={active ? 'pill-nav-active' : 'pill-nav'}>
-      {children}
+    <Link
+      href={href}
+      className={cn(
+        'relative z-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors',
+        active ? 'text-white' : 'border border-ink-200 bg-surface hover:border-ink-900 hover:bg-ink-900 hover:text-white',
+      )}
+    >
+      {active && (
+        <motion.span
+          layoutId="pill-active-bg"
+          className="absolute inset-0 -z-10 rounded-full bg-ink-900"
+          transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+        />
+      )}
+      <span className="relative">{children}</span>
     </Link>
   );
 }

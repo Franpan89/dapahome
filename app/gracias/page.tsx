@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { ProductCard } from '@/components/ProductCard';
+import { ProductGrid } from '@/components/ProductGrid';
 import { listProducts } from '@/lib/supabase/queries';
 
 export const metadata: Metadata = {
@@ -51,11 +51,7 @@ export default async function GraciasPage() {
               También te puede interesar
             </h2>
           </div>
-          <div className="grid gap-x-4 gap-y-10 grid-cols-2 lg:grid-cols-4">
-            {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <ProductGrid products={featured} className="grid gap-x-4 gap-y-10 grid-cols-2 lg:grid-cols-4" />
         </section>
       )}
     </div>

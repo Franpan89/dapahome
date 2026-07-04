@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useCart, cartTotals, cartItemKey } from '@/lib/cart/store';
 import { formatMoney, TAX_LABEL, taxAmount, withTax } from '@/lib/format';
-import { cn } from '@/lib/cn';
 
 export function CartDrawer() {
   const isOpen = useCart((s) => s.isOpen);
@@ -29,24 +29,28 @@ export function CartDrawer() {
   }, [isOpen]);
 
   return (
-    <>
-      <div
-        onClick={close}
-        aria-hidden
-        className={cn(
-          'fixed inset-0 z-50 bg-ink-900/40 backdrop-blur-sm transition-opacity duration-300',
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
-        )}
-      />
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label="Carrito"
-        className={cn(
-          'fixed right-0 top-0 z-50 h-dvh w-full max-w-md bg-surface shadow-2xl transition-transform duration-300 ease-out-quint flex flex-col',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
-        )}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            onClick={close}
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-50 bg-ink-900/40 backdrop-blur-sm"
+          />
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Carrito"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+            className="fixed right-0 top-0 z-50 h-dvh w-full max-w-md bg-surface shadow-2xl flex flex-col"
+          >
         <header className="relative overflow-hidden bg-ink-900 text-white p-6">
           <div className="relative flex items-center justify-between">
             <div>
@@ -82,63 +86,73 @@ export function CartDrawer() {
             </div>
           ) : (
             <ul className="divide-y divide-ink-200/60">
-              {items.map((it) => {
-                const k = cartItemKey(it);
-                return (
-                  <li key={k} className="flex gap-3 p-5">
-                    <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded bg-ink-100">
-                      {it.imageUrl && (
-                        <Image
-                          src={it.imageUrl}
-                          alt=""
-                          fill
-                          sizes="80px"
-                          className="object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/producto/${it.slug}`}
-                        onClick={close}
-                        className="font-display text-base leading-tight tracking-tight hover:text-primary line-clamp-2"
-                      >
-                        {it.name}
-                      </Link>
-                      {it.variantLabel && (
-                        <div className="mt-0.5 text-xs text-ink-600">{it.variantLabel}</div>
-                      )}
-                      <div className="mt-2 flex items-center justify-between gap-2">
-                        <div className="inline-flex items-center rounded-md border border-ink-200">
-                          <button
-                            type="button"
-                            onClick={() => setQty(k, it.quantity - 1)}
-                            className="h-8 w-8 grid place-items-center text-ink-600 hover:text-primary"
-                            aria-label="Reducir cantidad"
-                          >−</button>
-                          <span className="w-7 text-center text-sm tabular-nums">{it.quantity}</span>
-                          <button
-                            type="button"
-                            onClick={() => setQty(k, it.quantity + 1)}
-                            className="h-8 w-8 grid place-items-center text-ink-600 hover:text-primary"
-                            aria-label="Aumentar cantidad"
-                          >+</button>
-                        </div>
-                        <div className="font-mono text-sm tabular-nums">
-                          {formatMoney(it.unitPrice * it.quantity, it.currency)}
-                        </div>
+              <AnimatePresence initial={false}>
+                {items.map((it) => {
+                  const k = cartItemKey(it);
+                  return (
+                    <motion.li
+                      key={k}
+                      layout
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex gap-3 p-5 overflow-hidden"
+                    >
+                      <div className="relative h-20 w-16 flex-shrink-0 overflow-hidden rounded bg-ink-100">
+                        {it.imageUrl && (
+                          <Image
+                            src={it.imageUrl}
+                            alt=""
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                          />
+                        )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => remove(k)}
-                        className="mt-2 text-2xs text-danger hover:underline"
-                      >
-                        Quitar
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          href={`/producto/${it.slug}`}
+                          onClick={close}
+                          className="font-display text-base leading-tight tracking-tight hover:text-primary line-clamp-2"
+                        >
+                          {it.name}
+                        </Link>
+                        {it.variantLabel && (
+                          <div className="mt-0.5 text-xs text-ink-600">{it.variantLabel}</div>
+                        )}
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <div className="inline-flex items-center rounded-md border border-ink-200">
+                            <button
+                              type="button"
+                              onClick={() => setQty(k, it.quantity - 1)}
+                              className="h-8 w-8 grid place-items-center text-ink-600 hover:text-primary"
+                              aria-label="Reducir cantidad"
+                            >−</button>
+                            <span className="w-7 text-center text-sm tabular-nums">{it.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => setQty(k, it.quantity + 1)}
+                              className="h-8 w-8 grid place-items-center text-ink-600 hover:text-primary"
+                              aria-label="Aumentar cantidad"
+                            >+</button>
+                          </div>
+                          <div className="font-mono text-sm tabular-nums">
+                            {formatMoney(it.unitPrice * it.quantity, it.currency)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => remove(k)}
+                          className="mt-2 text-2xs text-danger hover:underline"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    </motion.li>
+                  );
+                })}
+              </AnimatePresence>
             </ul>
           )}
         </div>
@@ -168,8 +182,10 @@ export function CartDrawer() {
             </Link>
           </footer>
         )}
-      </aside>
-    </>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

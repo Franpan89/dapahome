@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { imageUrl } from '@/lib/supabase/image';
 import { formatMoney, TAX_LABEL, withTax } from '@/lib/format';
 import { useCart } from '@/lib/cart/store';
@@ -55,6 +56,9 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
       qty,
     );
     setAdded(true);
+    toast.success(`${product.name} agregado al carrito`, {
+      description: variant?.name,
+    });
     setTimeout(() => setAdded(false), 1800);
   };
 

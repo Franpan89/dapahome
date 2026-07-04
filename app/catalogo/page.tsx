@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ProductCard } from '@/components/ProductCard';
+import { ProductGrid } from '@/components/ProductGrid';
 import { CategoryPills } from '@/components/CategoryPills';
 import { CatalogSearch } from '@/components/CatalogSearch';
 import { CatalogToolbar, CatalogPagination } from '@/components/CatalogToolbar';
@@ -92,11 +92,7 @@ export default async function CatalogPage({ searchParams }: Props) {
           <EmptyState query={params.q} />
         ) : (
           <>
-            <div className="grid gap-x-4 gap-y-10 grid-cols-2 lg:grid-cols-4">
-              {items.map((p, i) => (
-                <ProductCard key={p.id} product={p} priority={i < 4} />
-              ))}
-            </div>
+            <ProductGrid products={items} className="grid gap-x-4 gap-y-10 grid-cols-2 lg:grid-cols-4" priorityCount={4} />
             <CatalogPagination page={page} total={total} perPage={perPage} />
           </>
         )}

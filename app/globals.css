@@ -151,4 +151,11 @@
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+  @keyframes kenburns {
+    from { transform: scale(1); }
+    to   { transform: scale(1.07); }
+  }
+  .animate-kenburns {
+    animation: kenburns 12s ease-out forwards;
+  }
 }

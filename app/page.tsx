@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ProductCard } from '@/components/ProductCard';
+import { ProductGrid } from '@/components/ProductGrid';
 import { CategoryPills } from '@/components/CategoryPills';
+import { Reveal } from '@/components/motion/Reveal';
+import { Enter } from '@/components/motion/Enter';
+import { Magnetic } from '@/components/motion/Magnetic';
 import {
   getCategories,
   getSettings,
@@ -45,36 +48,48 @@ export default async function HomePage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover opacity-40"
+                className="object-cover opacity-40 animate-kenburns"
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-ink-900/85 via-ink-900/60 to-transparent" aria-hidden />
 
             <div className="relative px-6 py-16 md:px-14 md:py-24 lg:py-28 max-w-3xl">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
-                {settings.hero.eyebrow}
-              </span>
-              <h1 className="mt-5 font-display text-4xl md:text-6xl lg:text-7xl font-medium leading-[0.98] tracking-tight text-balance">
-                {settings.hero.title}
-              </h1>
-              <p className="mt-5 max-w-xl text-base md:text-lg text-white/80 text-pretty">
-                {settings.hero.subtitle}
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/catalogo" className="btn bg-white text-ink-900 hover:bg-accent">
-                  Ver catálogo
-                  <ArrowIcon className="h-4 w-4" />
-                </Link>
-                <a
-                  href={`https://wa.me/${settings.whatsapp.number}`}
-                  target="_blank"
-                  rel="noopener"
-                  className="btn border border-white/30 text-white hover:bg-white/10"
-                >
-                  <WhatsAppIcon className="h-4 w-4" /> Hablar por WhatsApp
-                </a>
-              </div>
+              <Enter delay={0}>
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium">
+                  <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
+                  {settings.hero.eyebrow}
+                </span>
+              </Enter>
+              <Enter delay={0.08}>
+                <h1 className="mt-5 font-display text-4xl md:text-6xl lg:text-7xl font-medium leading-[0.98] tracking-tight text-balance">
+                  {settings.hero.title}
+                </h1>
+              </Enter>
+              <Enter delay={0.16}>
+                <p className="mt-5 max-w-xl text-base md:text-lg text-white/80 text-pretty">
+                  {settings.hero.subtitle}
+                </p>
+              </Enter>
+              <Enter delay={0.24}>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Magnetic>
+                    <Link href="/catalogo" className="btn bg-white text-ink-900 hover:bg-accent">
+                      Ver catálogo
+                      <ArrowIcon className="h-4 w-4" />
+                    </Link>
+                  </Magnetic>
+                  <Magnetic>
+                    <a
+                      href={`https://wa.me/${settings.whatsapp.number}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="btn border border-white/30 text-white hover:bg-white/10"
+                    >
+                      <WhatsAppIcon className="h-4 w-4" /> Hablar por WhatsApp
+                    </a>
+                  </Magnetic>
+                </div>
+              </Enter>
             </div>
           </div>
         </div>
@@ -87,7 +102,7 @@ export default async function HomePage() {
 
       {/* ============== CATEGORÍAS DESTACADAS (cards visuales) ============== */}
       <section className="container-page mt-8 mb-16">
-        <div className="flex items-end justify-between mb-6">
+        <Reveal className="flex items-end justify-between mb-6">
           <div>
             <div className="label">Comprar por categoría</div>
             <h2 className="mt-2 font-display text-3xl md:text-4xl tracking-tight">
@@ -97,7 +112,7 @@ export default async function HomePage() {
           <Link href="/catalogo" className="hidden sm:inline-flex items-center gap-1 text-sm font-medium hover:text-primary">
             Ver todo <ArrowIcon className="h-3.5 w-3.5" />
           </Link>
-        </div>
+        </Reveal>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 4).map((c, i) => {
             const sample = latest.find((p) => p.category?.slug === c.slug);
@@ -108,30 +123,31 @@ export default async function HomePage() {
               'bg-[#DDE5E3]',
             ];
             return (
-              <Link
-                key={c.id}
-                href={`/catalogo/${c.slug}`}
-                className={`group relative overflow-hidden rounded-2xl ${tints[i % tints.length]} p-5 aspect-[5/6] flex flex-col justify-between transition-transform hover:-translate-y-1`}
-              >
-                <div>
-                  <div className="text-2xs uppercase tracking-wider text-ink-600">0{i + 1}</div>
-                  <div className="mt-1 font-display text-2xl font-medium tracking-tight">{c.name}</div>
-                </div>
-                {sample?.images?.[0] && (
-                  <div className="relative w-full aspect-[4/3] self-end">
-                    <Image
-                      src={imageUrl(sample.images[0].storage_path)}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 25vw, 50vw"
-                      className="object-contain transition-transform duration-500 group-hover:scale-105"
-                    />
+              <Reveal key={c.id} delay={i * 0.06}>
+                <Link
+                  href={`/catalogo/${c.slug}`}
+                  className={`group relative overflow-hidden rounded-2xl ${tints[i % tints.length]} p-5 aspect-[5/6] flex flex-col justify-between transition-transform hover:-translate-y-1`}
+                >
+                  <div>
+                    <div className="text-2xs uppercase tracking-wider text-ink-600">0{i + 1}</div>
+                    <div className="mt-1 font-display text-2xl font-medium tracking-tight">{c.name}</div>
                   </div>
-                )}
-                <div className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-ink-900 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowIcon className="h-4 w-4" />
-                </div>
-              </Link>
+                  {sample?.images?.[0] && (
+                    <div className="relative w-full aspect-[4/3] self-end">
+                      <Image
+                        src={imageUrl(sample.images[0].storage_path)}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 25vw, 50vw"
+                        className="object-contain transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-ink-900 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowIcon className="h-4 w-4" />
+                  </div>
+                </Link>
+              </Reveal>
             );
           })}
         </div>
@@ -139,22 +155,18 @@ export default async function HomePage() {
 
       {/* ============== MÁS RECIENTES ============== */}
       <section className="container-page mb-20">
-        <div className="flex items-end justify-between mb-6">
+        <Reveal className="flex items-end justify-between mb-6">
           <div>
             <div className="label">Recién llegados</div>
             <h2 className="mt-2 font-display text-3xl md:text-4xl tracking-tight">Para descubrir</h2>
           </div>
-        </div>
-        <div className="grid gap-x-4 gap-y-8 grid-cols-2 lg:grid-cols-4">
-          {latest.slice(0, 8).map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        </Reveal>
+        <ProductGrid products={latest.slice(0, 8)} className="grid gap-x-4 gap-y-8 grid-cols-2 lg:grid-cols-4" />
       </section>
 
       {/* ============== INSTALACIONES (LÁMPARAS EN EL MERCADO) ============== */}
       <section className="container-page mb-20">
-        <div className="flex items-end justify-between mb-6">
+        <Reveal className="flex items-end justify-between mb-6">
           <div>
             <div className="label">Galería</div>
             <h2 className="mt-2 font-display text-3xl md:text-4xl tracking-tight">
@@ -164,28 +176,29 @@ export default async function HomePage() {
               Proyectos reales con clientes de Dapa Home: hogares, oficinas y comercios iluminados con nuestras piezas.
             </p>
           </div>
-        </div>
+        </Reveal>
         <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 [grid-auto-flow:dense]">
           {installations.map((item, i) => (
-            <figure
-              key={i}
-              className={`relative overflow-hidden rounded-2xl bg-ink-100 ${
-                i % 5 === 0 ? 'md:col-span-2 md:row-span-2 aspect-square' : 'aspect-[4/5]'
-              }`}
-            >
-              <Image
-                src={item.src}
-                alt={item.alt}
-                fill
-                sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                className="object-cover transition-transform duration-500 hover:scale-105"
-              />
-              {item.caption && (
-                <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/70 to-transparent p-3 text-xs text-white">
-                  {item.caption}
-                </figcaption>
-              )}
-            </figure>
+            <Reveal key={i} delay={(i % 5) * 0.05} y={16}>
+              <figure
+                className={`relative overflow-hidden rounded-2xl bg-ink-100 ${
+                  i % 5 === 0 ? 'md:col-span-2 md:row-span-2 aspect-square' : 'aspect-[4/5]'
+                }`}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                />
+                {item.caption && (
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/70 to-transparent p-3 text-xs text-white">
+                    {item.caption}
+                  </figcaption>
+                )}
+              </figure>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -193,16 +206,16 @@ export default async function HomePage() {
       {/* ============== TESTIMONIOS ============== */}
       {testimonials.length > 0 && (
         <section className="container-page mb-20">
-          <div className="mb-10">
+          <Reveal className="mb-10">
             <div className="label">Clientes felices</div>
             <h2 className="mt-2 font-display text-3xl md:text-4xl tracking-tight">
               Lo que dicen de nosotros
             </h2>
-          </div>
+          </Reveal>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {testimonials.map((t) => (
+            {testimonials.map((t, i) => (
+              <Reveal key={t.id} delay={i * 0.08}>
               <figure
-                key={t.id}
                 className="card p-6 flex flex-col gap-4 bg-surface rounded-2xl border border-ink-200/60"
               >
                 <div className="flex gap-0.5" aria-label={`${t.rating} de 5 estrellas`}>
@@ -233,6 +246,7 @@ export default async function HomePage() {
                   </div>
                 </figcaption>
               </figure>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -240,7 +254,7 @@ export default async function HomePage() {
 
       {/* ============== CTA WHATSAPP ============== */}
       <section className="container-page mb-20">
-        <div className="relative overflow-hidden rounded-3xl bg-primary text-white p-8 md:p-14">
+        <Reveal className="relative overflow-hidden rounded-3xl bg-primary text-white p-8 md:p-14">
           <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-secondary/30 blur-3xl" aria-hidden />
           <div className="absolute -bottom-16 -left-10 h-72 w-72 rounded-full bg-secondary/20 blur-3xl" aria-hidden />
           <div className="relative max-w-2xl">
@@ -249,20 +263,24 @@ export default async function HomePage() {
               ¿Proyecto a la vista? Hablamos y armamos tu pedido a la medida.
             </h2>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a
-                href={`https://wa.me/${settings.whatsapp.number}?text=Hola%20Dapa%20Home%2C%20me%20interesa%20cotizar%20para%20un%20proyecto.`}
-                target="_blank"
-                rel="noopener"
-                className="btn bg-secondary text-white hover:brightness-110"
-              >
-                <WhatsAppIcon className="h-4 w-4" /> Conversar por WhatsApp
-              </a>
-              <Link href="/sobre-nosotros#mayoristas" className="btn border border-white/30 text-white hover:bg-white/10">
-                Programa mayorista
-              </Link>
+              <Magnetic>
+                <a
+                  href={`https://wa.me/${settings.whatsapp.number}?text=Hola%20Dapa%20Home%2C%20me%20interesa%20cotizar%20para%20un%20proyecto.`}
+                  target="_blank"
+                  rel="noopener"
+                  className="btn bg-secondary text-white hover:brightness-110"
+                >
+                  <WhatsAppIcon className="h-4 w-4" /> Conversar por WhatsApp
+                </a>
+              </Magnetic>
+              <Magnetic>
+                <Link href="/sobre-nosotros#mayoristas" className="btn border border-white/30 text-white hover:bg-white/10">
+                  Programa mayorista
+                </Link>
+              </Magnetic>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
     </>
   );

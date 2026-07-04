@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition, useEffect, useRef, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { formatMoney } from '@/lib/format';
 import type { SearchHit } from '@/app/api/search/route';
 
@@ -103,45 +104,53 @@ export function CatalogSearch({ defaultValue = '' }: { defaultValue?: string }) 
         </button>
       </form>
 
-      {open && hits.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-2 rounded-2xl border border-ink-200/80 bg-surface shadow-xl overflow-hidden">
-          <ul>
-            {hits.map((hit) => (
-              <li key={hit.slug}>
-                <button
-                  type="button"
-                  onClick={() => goToProduct(hit.slug)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-ink-100/60 transition-colors text-left"
-                >
-                  <div className="relative h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-ink-100">
-                    {hit.imageUrl && (
-                      <Image src={hit.imageUrl} alt="" fill sizes="48px" className="object-cover" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium leading-tight truncate">{hit.name}</div>
-                    {hit.category && (
-                      <div className="text-xs text-ink-500 mt-0.5">{hit.category}</div>
-                    )}
-                  </div>
-                  <div className="text-sm font-semibold tabular-nums flex-shrink-0">
-                    {formatMoney(hit.price, hit.currency)}
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="border-t border-ink-200/60 px-4 py-2.5">
-            <button
-              type="button"
-              onClick={submit as unknown as React.MouseEventHandler}
-              className="text-xs text-primary hover:underline font-medium"
-            >
-              Ver todos los resultados para &ldquo;{query}&rdquo; →
-            </button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && hits.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute top-full left-0 right-0 z-50 mt-2 rounded-2xl border border-ink-200/80 bg-surface shadow-xl overflow-hidden"
+          >
+            <ul>
+              {hits.map((hit) => (
+                <li key={hit.slug}>
+                  <button
+                    type="button"
+                    onClick={() => goToProduct(hit.slug)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-ink-100/60 transition-colors text-left"
+                  >
+                    <div className="relative h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-ink-100">
+                      {hit.imageUrl && (
+                        <Image src={hit.imageUrl} alt="" fill sizes="48px" className="object-cover" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium leading-tight truncate">{hit.name}</div>
+                      {hit.category && (
+                        <div className="text-xs text-ink-500 mt-0.5">{hit.category}</div>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold tabular-nums flex-shrink-0">
+                      {formatMoney(hit.price, hit.currency)}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-ink-200/60 px-4 py-2.5">
+              <button
+                type="button"
+                onClick={submit as unknown as React.MouseEventHandler}
+                className="text-xs text-primary hover:underline font-medium"
+              >
+                Ver todos los resultados para &ldquo;{query}&rdquo; →
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

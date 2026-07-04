@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { imageUrl } from '@/lib/supabase/image';
 import type { Category, Product, ProductImage } from '@/lib/supabase/types';
 import { formatMoney, TAX_LABEL, withTax } from '@/lib/format';
@@ -27,9 +29,14 @@ export function ProductCard({ product, priority = false }: { product: CardProduc
       currency: product.currency,
       imageUrl: primary ? imageUrl(primary.storage_path) : null,
     });
+    toast.success(`${product.name} agregado al carrito`);
   }
 
   return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+    >
     <Link
       href={`/producto/${product.slug}`}
       className="group block"
@@ -97,6 +104,7 @@ export function ProductCard({ product, priority = false }: { product: CardProduc
         </div>
       </div>
     </Link>
+    </motion.div>
   );
 }
 
