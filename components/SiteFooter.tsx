@@ -58,7 +58,14 @@ export function SiteFooter() {
       </div>
       <div className="container-page border-t border-ink-200/60 py-6 flex flex-col sm:flex-row gap-2 items-center justify-between text-2xs text-ink-600">
         <span>© {new Date().getFullYear()} Dapa Home · Hecho con cariño en Cuenca.</span>
-        <span className="font-mono">v0.1 · catálogo dinámico</span>
+        <a
+          href="https://wa.me/593984886719"
+          target="_blank"
+          rel="noopener"
+          className="font-mono hover:text-primary"
+        >
+          Sitio web diseñado por: Pancho Andrade
+        </a>
       </div>
     </footer>
   );
