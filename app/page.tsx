@@ -31,6 +31,7 @@ export default async function HomePage() {
         src: imageUrl(it.storage_path),
         alt: it.alt ?? '',
         caption: it.caption ?? '',
+        mediaType: it.media_type,
       }))
     : INSTALACIONES_FALLBACK;
 
@@ -197,13 +198,25 @@ export default async function HomePage() {
                   i % 5 === 0 ? 'md:col-span-2 md:row-span-2 aspect-square' : 'aspect-[4/5]'
                 }`}
               >
-                <Image
-                  src={item.src}
-                  alt={item.alt}
-                  fill
-                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                  className="object-cover transition-transform duration-500 hover:scale-105"
-                />
+                {item.mediaType === 'video' ? (
+                  <video
+                    src={item.src}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    fill
+                    sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                    className="object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                )}
                 {item.caption && (
                   <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/70 to-transparent p-3 text-xs text-white">
                     {item.caption}
@@ -298,14 +311,14 @@ export default async function HomePage() {
   );
 }
 
-const INSTALACIONES_FALLBACK: { src: string; alt: string; caption?: string }[] = [
-  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante instalada en sala', caption: 'Sala — Quito' },
-  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara de mesa en dormitorio', caption: 'Dormitorio — Cumbayá' },
-  { src: '/instalaciones/placeholder.svg', alt: 'Aplique de pared en pasillo', caption: 'Pasillo — Guayaquil' },
-  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara de pie en oficina', caption: 'Oficina — Quito' },
-  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante sobre comedor', caption: 'Comedor — Cuenca' },
-  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante en restaurante', caption: 'Restaurante — Quito' },
-  { src: '/instalaciones/placeholder.svg', alt: 'Lámparas en cafetería', caption: 'Cafetería — Quito' },
+const INSTALACIONES_FALLBACK: { src: string; alt: string; caption?: string; mediaType: 'image' }[] = [
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante instalada en sala', caption: 'Sala — Quito', mediaType: 'image' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara de mesa en dormitorio', caption: 'Dormitorio — Cumbayá', mediaType: 'image' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Aplique de pared en pasillo', caption: 'Pasillo — Guayaquil', mediaType: 'image' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara de pie en oficina', caption: 'Oficina — Quito', mediaType: 'image' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante sobre comedor', caption: 'Comedor — Cuenca', mediaType: 'image' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámpara colgante en restaurante', caption: 'Restaurante — Quito', mediaType: 'image' },
+  { src: '/instalaciones/placeholder.svg', alt: 'Lámparas en cafetería', caption: 'Cafetería — Quito', mediaType: 'image' },
 ];
 
 function ArrowIcon(props: React.SVGProps<SVGSVGElement>) {

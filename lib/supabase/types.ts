@@ -77,12 +77,15 @@ export interface BlogPost {
   updated_at: string;
 }
 
+export type InstallationMediaType = 'image' | 'video';
+
 export interface Installation {
   id: string;
   storage_path: string;
   caption: string | null;
   alt: string | null;
   sort_order: number;
+  media_type: InstallationMediaType;
 }
 
 export type TestimonialStatus = 'active' | 'draft';

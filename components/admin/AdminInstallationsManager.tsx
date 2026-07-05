@@ -20,7 +20,8 @@ export function AdminInstallationsManager({ items: initial }: { items: Installat
     try {
       const next: Installation[] = [...items];
       for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop() ?? 'jpg';
+        const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+        const ext = file.name.split('.').pop() ?? (mediaType === 'video' ? 'mp4' : 'jpg');
         const path = `installations/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await sb.storage.from('products').upload(path, file, { upsert: false });
         if (upErr) { alert('Error subiendo: ' + upErr.message); continue; }
@@ -30,6 +31,7 @@ export function AdminInstallationsManager({ items: initial }: { items: Installat
             storage_path: path,
             alt: file.name.replace(/\.[^/.]+$/, ''),
             sort_order: next.length,
+            media_type: mediaType,
           })
           .select('*')
           .single();
@@ -75,23 +77,40 @@ export function AdminInstallationsManager({ items: initial }: { items: Installat
   return (
     <div className="card p-6">
       <label className="block">
-        <span className="label">Agregar fotos de instalaciones</span>
+        <span className="label">Agregar fotos o videos de instalaciones</span>
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           onChange={(e) => onUpload(e.target.files)}
           disabled={uploading}
           className="block w-full mt-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white hover:file:bg-primary-soft file:cursor-pointer"
         />
         {uploading && <p className="mt-2 text-xs text-ink-600">Subiendo…</p>}
+        <p className="mt-2 text-2xs text-ink-600">Los videos se reproducen en silencio y en bucle en el home.</p>
       </label>
 
       <ul className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
         {items.map((it, idx) => (
           <li key={it.id} className="group relative rounded-md overflow-hidden border border-ink-200">
             <div className="relative aspect-square bg-ink-100">
-              <Image src={imageUrl(it.storage_path)} alt={it.alt ?? ''} fill sizes="240px" className="object-cover" />
+              {it.media_type === 'video' ? (
+                <video
+                  src={imageUrl(it.storage_path)}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <Image src={imageUrl(it.storage_path)} alt={it.alt ?? ''} fill sizes="240px" className="object-cover" />
+              )}
+              {it.media_type === 'video' && (
+                <span className="absolute top-1.5 left-1.5 rounded bg-ink-900/70 px-1.5 py-0.5 text-2xs font-medium text-white">
+                  Video
+                </span>
+              )}
             </div>
             <div className="p-2 space-y-2 bg-surface">
               <input

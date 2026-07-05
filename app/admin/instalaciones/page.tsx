@@ -18,7 +18,7 @@ export default async function InstallationsAdminPage() {
         <div className="label">Galería</div>
         <h1 className="font-display text-3xl tracking-tight">Instalaciones</h1>
         <p className="mt-2 text-sm text-ink-600 max-w-xl">
-          Fotos reales de productos Dapa Home instalados en hogares y comercios.
+          Fotos y videos reales de productos Dapa Home instalados en hogares y comercios.
           Aparecen en el home en la sección <em>“Nuestras lámparas en el mercado”</em>.
         </p>
       </div>
