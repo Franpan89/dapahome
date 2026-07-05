@@ -115,7 +115,11 @@ export default async function HomePage() {
         </Reveal>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 4).map((c, i) => {
-            const sample = [...featured, ...latest].find((p) => p.category?.slug === c.slug && p.images?.[0]);
+            const cardImagePath =
+              c.hero_image_path ??
+              [...featured, ...latest].find((p) => p.category?.slug === c.slug && p.images?.[0])?.images?.[0]
+                ?.storage_path ??
+              null;
             const tints = [
               'bg-[#E8EDE5]',
               'bg-[#F3DDD3]',
@@ -126,12 +130,12 @@ export default async function HomePage() {
               <Reveal key={c.id} delay={i * 0.06}>
                 <Link
                   href={`/catalogo/${c.slug}`}
-                  className={`group relative overflow-hidden rounded-2xl ${sample ? '' : tints[i % tints.length]} p-5 aspect-[5/6] flex flex-col justify-between transition-transform hover:-translate-y-1`}
+                  className={`group relative overflow-hidden rounded-2xl ${cardImagePath ? '' : tints[i % tints.length]} p-5 aspect-[5/6] flex flex-col justify-between transition-transform hover:-translate-y-1`}
                 >
-                  {sample?.images?.[0] && (
+                  {cardImagePath && (
                     <>
                       <Image
-                        src={imageUrl(sample.images[0].storage_path)}
+                        src={imageUrl(cardImagePath)}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 25vw, 50vw"
@@ -144,12 +148,12 @@ export default async function HomePage() {
                     </>
                   )}
                   <div className="relative z-10">
-                    <div className={`text-2xs uppercase tracking-wider ${sample ? 'text-white/70' : 'text-ink-600'}`}>0{i + 1}</div>
-                    <div className={`mt-1 font-display text-2xl font-medium tracking-tight ${sample ? 'text-white' : 'text-ink-900'}`}>{c.name}</div>
+                    <div className={`text-2xs uppercase tracking-wider ${cardImagePath ? 'text-white/70' : 'text-ink-600'}`}>0{i + 1}</div>
+                    <div className={`mt-1 font-display text-2xl font-medium tracking-tight ${cardImagePath ? 'text-white' : 'text-ink-900'}`}>{c.name}</div>
                   </div>
                   <div
                     className={`relative z-10 self-end grid h-10 w-10 place-items-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                      sample ? 'bg-white/90 text-ink-900' : 'bg-ink-900 text-white'
+                      cardImagePath ? 'bg-white/90 text-ink-900' : 'bg-ink-900 text-white'
                     }`}
                   >
                     <ArrowIcon className="h-4 w-4" />

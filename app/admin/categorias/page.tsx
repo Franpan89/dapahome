@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/supabase/guard';
 import { AdminShell } from '@/components/AdminShell';
+import { AdminCategoryImage } from '@/components/admin/AdminCategoryImage';
 import { saveCategoryAction, deleteCategoryAction } from '@/app/admin/actions';
 
 export const dynamic = 'force-dynamic';
@@ -15,11 +16,12 @@ export default async function CategoriesAdminPage() {
         <h1 className="font-display text-3xl tracking-tight">Categorías</h1>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[1.8fr_1fr]">
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-ink-100 text-2xs uppercase tracking-wider text-ink-600">
               <tr>
+                <th className="text-left px-4 py-3">Imagen para el home</th>
                 <th className="text-left px-4 py-3">Nombre</th>
                 <th className="text-left px-4 py-3">Slug</th>
                 <th className="text-right px-4 py-3">Orden</th>
@@ -29,6 +31,9 @@ export default async function CategoriesAdminPage() {
             <tbody className="divide-y divide-ink-200/60">
               {(data ?? []).map((c) => (
                 <tr key={c.id}>
+                  <td className="px-4 py-3">
+                    <AdminCategoryImage categoryId={c.id} initialPath={c.hero_image_path} />
+                  </td>
                   <td className="px-4 py-3">
                     <form action={saveCategoryAction} className="grid gap-2 grid-cols-[1fr_1fr_80px_auto]">
                       <input type="hidden" name="id" value={c.id} />
@@ -47,7 +52,7 @@ export default async function CategoriesAdminPage() {
                 </tr>
               ))}
               {(!data || data.length === 0) && (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-ink-600">Sin categorías.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-ink-600">Sin categorías.</td></tr>
               )}
             </tbody>
           </table>
