@@ -273,7 +273,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
           <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Envíos a nivel nacional.</li>
           <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Asesoría por WhatsApp.</li>
           <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Garantía 6 meses.</li>
-          <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Cambios sin complicaciones.</li>
+          <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Personalización disponible.</li>
         </ul>
       </div>
     </div>

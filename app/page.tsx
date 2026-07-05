@@ -48,10 +48,10 @@ export default async function HomePage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover opacity-40 animate-kenburns"
+                className="object-cover opacity-55 animate-kenburns"
               />
             )}
-            <div className="absolute inset-0 bg-gradient-to-r from-ink-900/85 via-ink-900/60 to-transparent" aria-hidden />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink-900/70 via-ink-900/40 to-transparent" aria-hidden />
 
             <div className="relative px-6 py-16 md:px-14 md:py-24 lg:py-28 max-w-3xl">
               <Enter delay={0}>
@@ -115,7 +115,7 @@ export default async function HomePage() {
         </Reveal>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 4).map((c, i) => {
-            const sample = latest.find((p) => p.category?.slug === c.slug);
+            const sample = [...featured, ...latest].find((p) => p.category?.slug === c.slug && p.images?.[0]);
             const tints = [
               'bg-[#E8EDE5]',
               'bg-[#F3DDD3]',
@@ -126,24 +126,32 @@ export default async function HomePage() {
               <Reveal key={c.id} delay={i * 0.06}>
                 <Link
                   href={`/catalogo/${c.slug}`}
-                  className={`group relative overflow-hidden rounded-2xl ${tints[i % tints.length]} p-5 aspect-[5/6] flex flex-col justify-between transition-transform hover:-translate-y-1`}
+                  className={`group relative overflow-hidden rounded-2xl ${sample ? '' : tints[i % tints.length]} p-5 aspect-[5/6] flex flex-col justify-between transition-transform hover:-translate-y-1`}
                 >
-                  <div>
-                    <div className="text-2xs uppercase tracking-wider text-ink-600">0{i + 1}</div>
-                    <div className="mt-1 font-display text-2xl font-medium tracking-tight">{c.name}</div>
-                  </div>
                   {sample?.images?.[0] && (
-                    <div className="relative w-full aspect-[4/3] self-end">
+                    <>
                       <Image
                         src={imageUrl(sample.images[0].storage_path)}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 25vw, 50vw"
-                        className="object-contain transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    </div>
+                      <div
+                        className="absolute inset-0 bg-gradient-to-b from-ink-900/50 via-ink-900/10 to-ink-900/40"
+                        aria-hidden
+                      />
+                    </>
                   )}
-                  <div className="absolute bottom-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-ink-900 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="relative z-10">
+                    <div className={`text-2xs uppercase tracking-wider ${sample ? 'text-white/70' : 'text-ink-600'}`}>0{i + 1}</div>
+                    <div className={`mt-1 font-display text-2xl font-medium tracking-tight ${sample ? 'text-white' : 'text-ink-900'}`}>{c.name}</div>
+                  </div>
+                  <div
+                    className={`relative z-10 self-end grid h-10 w-10 place-items-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+                      sample ? 'bg-white/90 text-ink-900' : 'bg-ink-900 text-white'
+                    }`}
+                  >
                     <ArrowIcon className="h-4 w-4" />
                   </div>
                 </Link>
@@ -254,7 +262,7 @@ export default async function HomePage() {
 
       {/* ============== CTA WHATSAPP ============== */}
       <section className="container-page mb-20">
-        <Reveal className="relative overflow-hidden rounded-3xl bg-primary text-white p-8 md:p-14">
+        <Reveal className="relative overflow-hidden rounded-3xl bg-ink-900 text-white p-8 md:p-14">
           <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-secondary/30 blur-3xl" aria-hidden />
           <div className="absolute -bottom-16 -left-10 h-72 w-72 rounded-full bg-secondary/20 blur-3xl" aria-hidden />
           <div className="relative max-w-2xl">

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { Montserrat } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -10,24 +10,10 @@ import { PromoBar } from '@/components/PromoBar';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { getSettings } from '@/lib/supabase/queries';
 
-const display = Bricolage_Grotesque({
+const montserrat = Montserrat({
   subsets: ['latin'],
-  variable: '--font-display',
+  variable: '--font-montserrat',
   weight: 'variable',
-  display: 'swap',
-});
-
-const sans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
-
-const mono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  weight: ['400', '500'],
   display: 'swap',
 });
 
@@ -72,7 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     },
   };
   return (
-    <html lang="es" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="es" className={montserrat.variable}>
       <body className="min-h-dvh flex flex-col bg-ink-100 text-ink-900">
         <script
           type="application/ld+json"

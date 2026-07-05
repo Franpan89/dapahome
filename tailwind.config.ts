@@ -30,9 +30,9 @@ const config: Config = {
         danger: 'rgb(var(--danger) / <alpha-value>)',
       },
       fontFamily: {
-        display: ['var(--font-display)', 'serif'],
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-mono)', 'monospace'],
+        display: ['var(--font-montserrat)', 'sans-serif'],
+        sans: ['var(--font-montserrat)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-montserrat)', 'monospace'],
       },
       fontSize: {
         '2xs': ['0.75rem', { lineHeight: '1.1rem' }],

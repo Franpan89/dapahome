@@ -33,7 +33,6 @@
 
   body {
     font-family: var(--font-sans), system-ui, sans-serif;
-    font-feature-settings: 'ss01', 'cv11';
   }
 
   ::selection {
@@ -53,7 +52,6 @@
   }
 
   .font-display {
-    font-feature-settings: 'ss01';
     letter-spacing: -0.025em;
   }
 }
