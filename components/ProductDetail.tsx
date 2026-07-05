@@ -90,7 +90,8 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
   }, [product, variant, color, qty, price]);
 
   return (
-    <article className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16 items-start">
+    <article>
+    <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16 items-start">
       {/* Galería */}
       <div className="grid gap-3 lg:grid-cols-[88px_1fr]">
         <div className="order-2 lg:order-1 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible scrollbar-hide">
@@ -175,12 +176,6 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
             </span>
           )}
         </div>
-
-        {product.description && (
-          <p className="text-ink-600 leading-relaxed text-pretty whitespace-pre-line">
-            {product.description}
-          </p>
-        )}
 
         {product.variants.length > 0 && (
           <fieldset>
@@ -281,6 +276,16 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
           <li className="flex gap-2.5"><CheckIcon className="h-4 w-4 text-success mt-0.5 flex-shrink-0" /> Cambios sin complicaciones.</li>
         </ul>
       </div>
+    </div>
+
+      {product.description && (
+        <div className="mt-12 lg:mt-16 border-t border-ink-200/60 pt-10">
+          <h2 className="label mb-3">Descripción</h2>
+          <p className="text-ink-600 leading-relaxed text-pretty whitespace-pre-line">
+            {product.description}
+          </p>
+        </div>
+      )}
 
       {/* Sticky CTA móvil */}
       <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden border-t border-ink-200/60 bg-surface/95 backdrop-blur shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
