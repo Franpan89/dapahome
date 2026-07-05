@@ -1,8 +1,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { NewsletterForm } from '@/components/NewsletterForm';
+import { getCategories } from '@/lib/supabase/queries';
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const categories = await getCategories();
+  const catalogLinks: [string, string][] = [
+    ['/catalogo', 'Todos los productos'],
+    ...categories.slice(0, 4).map((c): [string, string] => [`/catalogo/${c.slug}`, c.name]),
+  ];
+
   return (
     <footer className="mt-24 border-t border-ink-200/60 bg-surface">
       <div className="container-page py-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 border-b border-ink-200/60">
@@ -36,18 +43,11 @@ export function SiteFooter() {
             <NewsletterForm />
           </div>
         </div>
-        <FooterCol title="Catálogo" links={[
-          ['/catalogo', 'Todos los productos'],
-          ['/catalogo/iluminacion', 'Iluminación'],
-          ['/catalogo/decoracion', 'Decoración'],
-          ['/catalogo/domotica', 'Domótica'],
-          ['/catalogo/mobiliario', 'Mobiliario'],
-        ]} />
+        <FooterCol title="Catálogo" links={catalogLinks} />
         <FooterCol title="Empresa" links={[
           ['/sobre-nosotros', 'Sobre nosotros'],
           ['/blog', 'Blog'],
-          ['/sobre-nosotros#mayoristas', 'Mayoristas'],
-          ['/sobre-nosotros#diseno', 'Para diseñadores'],
+          ['/sobre-nosotros#mayoristas', 'Mayoristas y diseñadores'],
         ]} />
         <FooterCol title="Contacto" links={[
           ['https://wa.me/593998001894', 'WhatsApp'],
