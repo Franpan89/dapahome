@@ -12,6 +12,7 @@ import {
 import type {
   BlogPost,
   Category,
+  HeroSlide,
   Installation,
   Product,
   ProductColor,
@@ -21,6 +22,29 @@ import type {
   SiteSettings,
   Testimonial,
 } from './types';
+
+// Compatibilidad con el formato anterior de `hero` (un solo objeto
+// {eyebrow,title,subtitle} en vez de {slides:[...]}), para que sitios que
+// todavía no han guardado el nuevo formato sigan mostrando su hero actual.
+export function normalizeHero(raw: unknown): SiteSettings['hero'] {
+  const value = (raw ?? {}) as Record<string, unknown>;
+  if (Array.isArray(value.slides) && value.slides.length > 0) {
+    return { slides: value.slides as HeroSlide[] };
+  }
+  if (value.eyebrow || value.title || value.subtitle) {
+    return {
+      slides: [
+        {
+          eyebrow: (value.eyebrow as string) ?? '',
+          title: (value.title as string) ?? '',
+          subtitle: (value.subtitle as string) ?? '',
+          image_path: null,
+        },
+      ],
+    };
+  }
+  return DEMO_SETTINGS.hero;
+}
 
 export const getCategories = cache(async (): Promise<Category[]> => {
   if (!isSupabaseConfigured()) return DEMO_CATEGORIES;
@@ -42,7 +66,7 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
     return {
       whatsapp: (map.get('whatsapp') as SiteSettings['whatsapp']) ?? DEMO_SETTINGS.whatsapp,
       checkout_template: (map.get('checkout_template') as SiteSettings['checkout_template']) ?? DEMO_SETTINGS.checkout_template,
-      hero: (map.get('hero') as SiteSettings['hero']) ?? DEMO_SETTINGS.hero,
+      hero: normalizeHero(map.get('hero')),
       promo_bar: (map.get('promo_bar') as SiteSettings['promo_bar']) ?? DEMO_SETTINGS.promo_bar,
     };
   } catch {

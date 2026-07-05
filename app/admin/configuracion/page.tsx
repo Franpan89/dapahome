@@ -2,6 +2,8 @@ import { requireAdmin } from '@/lib/supabase/guard';
 import { AdminShell } from '@/components/AdminShell';
 import { saveSettingAction } from '@/app/admin/actions';
 import { PromoBarForm } from '@/components/admin/PromoBarForm';
+import { HeroSlidesForm } from '@/components/admin/HeroSlidesForm';
+import { normalizeHero } from '@/lib/supabase/queries';
 import type { PromoBar } from '@/lib/supabase/types';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +15,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const map = new Map((data ?? []).map((r: any) => [r.key, r.value]));
   const wa = map.get('whatsapp') ?? { number: '', greeting: '' };
   const tpl = map.get('checkout_template') ?? { intro: '', outro: '' };
-  const hero = map.get('hero') ?? { eyebrow: '', title: '', subtitle: '' };
+  const hero = normalizeHero(map.get('hero'));
   const promo = (map.get('promo_bar') as PromoBar) ?? { enabled: false, text: '', link: '' };
 
   return (
@@ -47,17 +49,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           ]}
           current={tpl}
         />
-        <SettingForm
-          title="Hero del home"
-          k="hero"
-          fields={[
-            { name: 'eyebrow', label: 'Eyebrow', value: hero.eyebrow ?? '' },
-            { name: 'title', label: 'Título', value: hero.title ?? '', textarea: true },
-            { name: 'subtitle', label: 'Subtítulo', value: hero.subtitle ?? '', textarea: true },
-          ]}
-          current={hero}
-          className="lg:col-span-2"
-        />
+        <HeroSlidesForm current={hero} />
         <PromoBarForm current={promo} />
       </div>
     </AdminShell>

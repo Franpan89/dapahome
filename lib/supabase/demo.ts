@@ -148,9 +148,14 @@ export const DEMO_SETTINGS: SiteSettings = {
     outro: 'Quedo atento(a) para coordinar el pago y la entrega. ¡Gracias!',
   },
   hero: {
-    eyebrow: 'Catálogo demo',
-    title: 'Diseño para el hogar que se siente personal.',
-    subtitle: 'Iluminación, decoración y domótica curada en Ecuador.',
+    slides: [
+      {
+        eyebrow: 'Catálogo demo',
+        title: 'Diseño para el hogar que se siente personal.',
+        subtitle: 'Iluminación, decoración y domótica curada en Ecuador.',
+        image_path: null,
+      },
+    ],
   },
   promo_bar: { enabled: false, text: '', link: '' },
 };

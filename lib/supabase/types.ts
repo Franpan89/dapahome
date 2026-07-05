@@ -109,9 +109,16 @@ export interface PromoBar {
   link: string;
 }
 
+export interface HeroSlide {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  image_path: string | null;
+}
+
 export interface SiteSettings {
   whatsapp: { number: string; greeting: string };
   checkout_template: { intro: string; outro: string };
-  hero: { eyebrow: string; title: string; subtitle: string };
+  hero: { slides: HeroSlide[] };
   promo_bar: PromoBar;
 }

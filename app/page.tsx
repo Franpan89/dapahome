@@ -2,8 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ProductGrid } from '@/components/ProductGrid';
 import { CategoryPills } from '@/components/CategoryPills';
+import { HeroSlideshow } from '@/components/HeroSlideshow';
 import { Reveal } from '@/components/motion/Reveal';
-import { Enter } from '@/components/motion/Enter';
 import { Magnetic } from '@/components/motion/Magnetic';
 import {
   getCategories,
@@ -38,63 +38,11 @@ export default async function HomePage() {
   return (
     <>
       {/* ============== HERO ============== */}
-      <section className="relative">
-        <div className="container-page pt-6 pb-12">
-          <div className="relative overflow-hidden rounded-3xl bg-ink-900 text-white">
-            <div className="absolute inset-0 bg-warm-mesh opacity-80" aria-hidden />
-            {featured[0]?.images?.[0] && (
-              <Image
-                src={imageUrl(featured[0].images[0].storage_path)}
-                alt=""
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover opacity-55 animate-kenburns"
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-r from-ink-900/70 via-ink-900/40 to-transparent" aria-hidden />
-
-            <div className="relative px-6 py-16 md:px-14 md:py-24 lg:py-28 max-w-3xl">
-              <Enter delay={0}>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium">
-                  <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
-                  {settings.hero.eyebrow}
-                </span>
-              </Enter>
-              <Enter delay={0.08}>
-                <h1 className="mt-5 font-display text-4xl md:text-6xl lg:text-7xl font-medium leading-[0.98] tracking-tight text-balance">
-                  {settings.hero.title}
-                </h1>
-              </Enter>
-              <Enter delay={0.16}>
-                <p className="mt-5 max-w-xl text-base md:text-lg text-white/80 text-pretty">
-                  {settings.hero.subtitle}
-                </p>
-              </Enter>
-              <Enter delay={0.24}>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Magnetic>
-                    <Link href="/catalogo" className="btn bg-white text-ink-900 hover:bg-accent">
-                      Ver catálogo
-                      <ArrowIcon className="h-4 w-4" />
-                    </Link>
-                  </Magnetic>
-                  <Magnetic>
-                    <a
-                      href={`https://wa.me/${settings.whatsapp.number}`}
-                      target="_blank"
-                      rel="noopener"
-                      className="btn border border-white/30 text-white hover:bg-white/10"
-                    >
-                      <WhatsAppIcon className="h-4 w-4" /> Hablar por WhatsApp
-                    </a>
-                  </Magnetic>
-                </div>
-              </Enter>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSlideshow
+        slides={settings.hero.slides}
+        whatsappNumber={settings.whatsapp.number}
+        fallbackImageUrl={featured[0]?.images?.[0] ? imageUrl(featured[0].images[0].storage_path) : null}
+      />
 
       {/* ============== BARRA DE CATEGORÍAS ============== */}
       <section className="container-page">
