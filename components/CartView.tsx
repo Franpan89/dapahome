@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
 import { formatMoney, TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
-import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
+import { buildWhatsAppMessage, whatsappHref, type ShippingQuote } from '@/lib/whatsapp/buildMessage';
+import { TerritoryCombobox } from '@/components/TerritoryCombobox';
 import type { SiteSettings } from '@/lib/supabase/types';
 
 export function CartView({ settings }: { settings: SiteSettings }) {
@@ -20,11 +21,43 @@ export function CartView({ settings }: { settings: SiteSettings }) {
 
   const router = useRouter();
   const [touched, setTouched] = useState({ name: false, city: false });
+  const [quote, setQuote] = useState<ShippingQuote | null>(null);
+  const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
 
   const errors = validate(customer);
   const isValid = Object.values(errors).every((e) => !e);
 
-  const shippingFee = customer.delivery === 'delivery' ? DELIVERY_FEE : 0;
+  useEffect(() => {
+    if (customer.delivery !== 'delivery' || !customer.territoryBaseId) {
+      setQuote(null);
+      setQuoteStatus('idle');
+      return;
+    }
+    let cancelled = false;
+    setQuoteStatus('loading');
+    fetch('/api/shipping-quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ territoryBaseId: customer.territoryBaseId }),
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data: ShippingQuote) => {
+        if (cancelled) return;
+        setQuote(data);
+        setQuoteStatus('ok');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setQuote(null);
+        setQuoteStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [customer.delivery, customer.territoryBaseId]);
+
+  const isDelivery = customer.delivery === 'delivery';
+  const shippingFee = isDelivery ? (quote?.priceTotal ?? DELIVERY_FEE) : 0;
   const iva = taxAmount(subtotal);
   const total = withTax(subtotal) + shippingFee;
 
@@ -34,8 +67,9 @@ export function CartView({ settings }: { settings: SiteSettings }) {
         items,
         data: customer,
         template: settings.checkout_template,
+        shippingQuote: quote,
       }),
-    [items, customer, settings],
+    [items, customer, settings, quote],
   );
 
   const href = whatsappHref(settings.whatsapp.number, previewMsg);
@@ -129,7 +163,7 @@ export function CartView({ settings }: { settings: SiteSettings }) {
               >
                 <div className="font-medium">Envío a domicilio</div>
                 <div className={`text-2xs ${customer.delivery === 'delivery' ? 'text-white/70' : 'text-ink-600'}`}>
-                  + {formatMoney(DELIVERY_FEE)} recargo
+                  Se cotiza según tu ciudad
                 </div>
               </button>
             </div>
@@ -148,17 +182,29 @@ export function CartView({ settings }: { settings: SiteSettings }) {
               <span className="font-mono tabular-nums">+ {formatMoney(iva)}</span>
             </div>
             <div className="flex items-baseline justify-between text-sm">
-              <span className="text-ink-600">{customer.delivery === 'delivery' ? 'Envío' : 'Retiro en oficina'}</span>
+              <span className="text-ink-600">{isDelivery ? 'Envío' : 'Retiro en oficina'}</span>
               <span className="font-mono tabular-nums">
-                {shippingFee > 0 ? `+ ${formatMoney(shippingFee)}` : 'Gratis'}
+                {isDelivery && quoteStatus === 'loading'
+                  ? 'Calculando…'
+                  : shippingFee > 0
+                    ? `+ ${formatMoney(shippingFee)}`
+                    : 'Gratis'}
               </span>
             </div>
             <div className="flex items-baseline justify-between pt-3 border-t border-ink-200/60">
               <span className="label">Total a pagar</span>
               <span className="font-mono text-2xl tabular-nums font-semibold">{formatMoney(total)}</span>
             </div>
-            {customer.delivery === 'delivery' && (
-              <p className="text-2xs text-ink-600">El recargo de envío cubre Cuenca. Otras ciudades se cotizan por WhatsApp.</p>
+            {isDelivery && quoteStatus === 'ok' && quote && (
+              <p className="text-2xs text-ink-600">Entrega estimada: {quote.estimateDays} día(s) hábiles.</p>
+            )}
+            {isDelivery && quoteStatus === 'error' && (
+              <p className="text-2xs text-danger">
+                No pudimos cotizar tu ciudad ahora mismo. Se muestra un envío estimado de {formatMoney(DELIVERY_FEE)} — confirmamos el valor final por WhatsApp.
+              </p>
+            )}
+            {isDelivery && !customer.territoryBaseId && (
+              <p className="text-2xs text-ink-600">Elige tu ciudad para ver el costo real de envío.</p>
             )}
           </div>
 
@@ -174,16 +220,13 @@ export function CartView({ settings }: { settings: SiteSettings }) {
               placeholder="María Pérez"
               autoComplete="name"
             />
-            <Field
+            <TerritoryCombobox
               id="city"
               label="Ciudad"
-              required
               value={customer.city}
-              onChange={(v) => setCustomer({ city: v })}
+              onSelect={(territoryBaseId, label) => setCustomer({ territoryBaseId, city: label })}
               onBlur={() => setTouched((t) => ({ ...t, city: true }))}
               error={touched.city ? errors.city : undefined}
-              placeholder="Cuenca"
-              autoComplete="address-level2"
             />
             <div>
               <label htmlFor="notes" className="label">Notas (opcional)</label>
@@ -197,7 +240,7 @@ export function CartView({ settings }: { settings: SiteSettings }) {
             </div>
           </div>
 
-          {isValid ? (
+          {isValid && !(isDelivery && quoteStatus === 'loading') ? (
             <button type="button" onClick={handleCheckout} className="btn-primary w-full">
               <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
             </button>
@@ -272,7 +315,7 @@ function Field({
 function validate(c: CustomerData): { name?: string; city?: string } {
   const errors: { name?: string; city?: string } = {};
   if (c.name.trim().length < 2) errors.name = 'Cuéntanos tu nombre.';
-  if (c.city.trim().length < 2) errors.city = 'Necesitamos saber tu ciudad para coordinar el envío.';
+  if (!c.territoryBaseId) errors.city = 'Elige tu ciudad de la lista para poder cotizar el envío.';
   return errors;
 }
 

@@ -8,11 +8,18 @@ export interface CheckoutData {
   delivery?: DeliveryMethod;
 }
 
+export interface ShippingQuote {
+  priceTotal: number;
+  estimateDays: number;
+}
+
 export interface BuildMessageOpts {
   items: CartItem[];
   data: CheckoutData;
   template: { intro: string; outro: string };
   currency?: string;
+  /** Cotización real de Sendifico para la ciudad elegida; si falta, se usa el recargo fijo. */
+  shippingQuote?: ShippingQuote | null;
 }
 
 const fmt = (n: number, currency = 'USD') =>
@@ -20,7 +27,7 @@ const fmt = (n: number, currency = 'USD') =>
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dapahome.ec').replace(/\/$/, '');
 
-export function buildWhatsAppMessage({ items, data, template, currency = 'USD' }: BuildMessageOpts) {
+export function buildWhatsAppMessage({ items, data, template, currency = 'USD', shippingQuote }: BuildMessageOpts) {
   const lines: string[] = [];
   lines.push(template.intro);
   lines.push('');
@@ -32,14 +39,14 @@ export function buildWhatsAppMessage({ items, data, template, currency = 'USD' }
   }
   const subtotal = items.reduce((a, i) => a + i.unitPrice * i.quantity, 0);
   const delivery: DeliveryMethod = data.delivery ?? 'pickup';
-  const shippingFee = delivery === 'delivery' ? DELIVERY_FEE : 0;
+  const shippingFee = delivery === 'delivery' ? (shippingQuote?.priceTotal ?? DELIVERY_FEE) : 0;
   const total = withTax(subtotal) + shippingFee;
   lines.push('');
   lines.push(`Subtotal: ${fmt(subtotal, currency)}`);
   lines.push(`${TAX_LABEL}: ${fmt(taxAmount(subtotal), currency)}`);
   lines.push(
     delivery === 'delivery'
-      ? `Envío: ${fmt(shippingFee, currency)}`
+      ? `Envío${shippingQuote ? ` (${shippingQuote.estimateDays} días aprox.)` : ''}: ${fmt(shippingFee, currency)}`
       : 'Retiro en oficina: gratis',
   );
   lines.push(`Total a pagar: ${fmt(total, currency)}`);

@@ -21,6 +21,7 @@ export type DeliveryMethod = 'pickup' | 'delivery';
 export interface CustomerData {
   name: string;
   city: string;
+  territoryBaseId: string | null;
   notes: string;
   delivery: DeliveryMethod;
 }
@@ -47,7 +48,7 @@ export const useCart = create<CartState>()(
     (set) => ({
       items: [],
       isOpen: false,
-      customer: { name: '', city: '', notes: '', delivery: 'pickup' },
+      customer: { name: '', city: '', territoryBaseId: null, notes: '', delivery: 'pickup' },
       setCustomer: (patch) => set((s) => ({ customer: { ...s.customer, ...patch } })),
       add: (item, qty = 1) =>
         set((s) => {
