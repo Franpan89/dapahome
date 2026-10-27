@@ -1,16 +1,9 @@
-import type { CartItem, DeliveryMethod } from '@/lib/cart/store';
+import { effectiveBilling, type CartItem, type CustomerData, type DeliveryMethod } from '@/lib/cart/store';
 import { TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
-
-export interface CheckoutData {
-  name: string;
-  city: string;
-  notes: string;
-  delivery?: DeliveryMethod;
-}
 
 export interface BuildMessageOpts {
   items: CartItem[];
-  data: CheckoutData;
+  data: CustomerData;
   template: { intro: string; outro: string };
   currency?: string;
 }
@@ -42,15 +35,32 @@ export function buildWhatsAppMessage({ items, data, template, currency = 'USD' }
   );
   lines.push(`Total a pagar: ${fmt(total, currency)}`);
   lines.push('');
-  lines.push('Mis datos:');
-  if (data.name) lines.push(`• Nombre: ${data.name}`);
-  if (data.city) lines.push(`• Ciudad: ${data.city}`);
-  lines.push(
-    delivery === 'delivery'
-      ? '• Entrega: Envío a domicilio'
-      : `• Entrega: ${PICKUP_ADDRESS}`,
-  );
-  if (data.notes) lines.push(`• Notas: ${data.notes}`);
+  if (data.firstName) {
+    lines.push('Datos de envío:');
+    lines.push(`• Nombre: ${data.firstName} ${data.lastName}`.trim());
+    if (data.phone) lines.push(`• Celular: ${data.phone}`);
+    if (data.email) lines.push(`• Correo: ${data.email}`);
+    if (data.address) lines.push(`• Dirección: ${data.address}`);
+    if (data.city) lines.push(`• Ciudad: ${data.city}`);
+    lines.push(
+      delivery === 'delivery'
+        ? '• Entrega: Envío a domicilio'
+        : `• Entrega: ${PICKUP_ADDRESS}`,
+    );
+    if (data.notes) lines.push(`• Notas: ${data.notes}`);
+    const b = effectiveBilling(data);
+    lines.push('');
+    lines.push('Datos de facturación:');
+    lines.push(`• Cédula/RUC: ${b.documentId}`);
+    if (data.billingSame) {
+      lines.push('• Mismos datos del envío');
+    } else {
+      lines.push(`• Nombre: ${b.firstName} ${b.lastName}`.trim());
+      lines.push(`• Celular: ${b.phone}`);
+      lines.push(`• Correo: ${b.email}`);
+      lines.push(`• Dirección: ${b.address}`);
+    }
+  }
   lines.push('');
   lines.push(template.outro);
   return lines.join('\n');

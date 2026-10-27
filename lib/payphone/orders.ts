@@ -3,6 +3,7 @@ import { createSupabaseAdmin } from '@/lib/supabase/server';
 import { taxAmount, withTax, DELIVERY_FEE } from '@/lib/format';
 import { confirmPayphoneTransaction, toCents, PayphoneError } from '@/lib/payphone/client';
 import type { CartItem, CustomerData } from '@/lib/cart/store';
+import { validateCustomer, billingForPayphone } from '@/lib/checkout/validate';
 
 export class OrderError extends Error {
   constructor(
@@ -27,6 +28,10 @@ export interface PayphoneBoxAmounts {
   tax: number;
   reference: string;
   currency: string;
+  phoneNumber: string;
+  email: string;
+  documentId: string;
+  identificationType: number;
 }
 
 export async function createPayphoneOrder({
@@ -36,11 +41,8 @@ export async function createPayphoneOrder({
   if (!Array.isArray(items) || items.length === 0) {
     throw new OrderError(400, 'El carrito está vacío.');
   }
-  if (!customer?.name || customer.name.trim().length < 2) {
-    throw new OrderError(400, 'Falta el nombre del cliente.');
-  }
-  if (!customer?.city || customer.city.trim().length < 2) {
-    throw new OrderError(400, 'Falta la ciudad del cliente.');
+  if (!customer || Object.keys(validateCustomer(customer)).length > 0) {
+    throw new OrderError(400, 'Faltan datos de envío o facturación.');
   }
 
   const safeShippingFee = customer.delivery === 'delivery' ? DELIVERY_FEE : 0;
@@ -52,7 +54,7 @@ export async function createPayphoneOrder({
   const total = withTax(subtotal) + safeShippingFee;
   const currency = items[0]?.currency || 'USD';
   const clientTransactionId = randomUUID();
-  const reference = `Dapa Home - ${customer.name}`.slice(0, 100);
+  const reference = `Dapa Home - ${customer.firstName} ${customer.lastName}`.slice(0, 100);
 
   const sb = createSupabaseAdmin();
   const { error } = await sb.from('orders').insert({
@@ -78,6 +80,7 @@ export async function createPayphoneOrder({
     tax: toCents(tax),
     reference,
     currency,
+    ...billingForPayphone(customer),
   };
 }
 

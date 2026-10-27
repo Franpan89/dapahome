@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
+import { useCart, cartTotals, cartItemKey, effectiveBilling } from '@/lib/cart/store';
+import { validateCustomer, type CustomerErrors } from '@/lib/checkout/validate';
 import { formatMoney, TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
 import { PayphoneBox } from '@/components/PayphoneBox';
@@ -23,6 +24,10 @@ interface PayphoneAmounts {
   tax: number;
   reference: string;
   currency: string;
+  phoneNumber: string;
+  email: string;
+  documentId: string;
+  identificationType: number;
 }
 
 export function CartView({ settings }: { settings: SiteSettings }) {
@@ -35,14 +40,18 @@ export function CartView({ settings }: { settings: SiteSettings }) {
   const { subtotal, count } = cartTotals(items);
 
   const router = useRouter();
-  const [touched, setTouched] = useState({ name: false, city: false });
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('whatsapp');
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('payphone');
   const [payphoneAmounts, setPayphoneAmounts] = useState<PayphoneAmounts | null>(null);
   const [payphoneStatus, setPayphoneStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [payphoneError, setPayphoneError] = useState<string | null>(null);
 
-  const errors = validate(customer);
-  const isValid = Object.values(errors).every((e) => !e);
+  const errors = validateCustomer(customer);
+  const isValid = Object.keys(errors).length === 0;
+  const touch = (k: string) => setTouched((t) => ({ ...t, [k]: true }));
+  const err = (k: keyof CustomerErrors) => (touched[k] || submitted ? errors[k] : undefined);
+  const billing = effectiveBilling(customer);
 
   const isDelivery = customer.delivery === 'delivery';
   const shippingFee = isDelivery ? DELIVERY_FEE : 0;
@@ -208,28 +217,27 @@ export function CartView({ settings }: { settings: SiteSettings }) {
           </div>
 
           <div className="space-y-3 border-t border-ink-200/60 pt-5">
-            <Field
-              id="name"
-              label="Nombre completo"
-              required
-              value={customer.name}
-              onChange={(v) => setCustomer({ name: v })}
-              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
-              error={touched.name ? errors.name : undefined}
-              placeholder="María Pérez"
-              autoComplete="name"
-            />
-            <Field
-              id="city"
-              label="Ciudad"
-              required
-              value={customer.city}
-              onChange={(v) => setCustomer({ city: v })}
-              onBlur={() => setTouched((t) => ({ ...t, city: true }))}
-              error={touched.city ? errors.city : undefined}
-              placeholder="Cuenca"
-              autoComplete="address-level2"
-            />
+            <h3 className="label">Datos de envío</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <Field id="firstName" label="Nombres" required value={customer.firstName}
+                onChange={(v) => setCustomer({ firstName: v })} onBlur={() => touch('firstName')}
+                error={err('firstName')} placeholder="María" autoComplete="given-name" />
+              <Field id="lastName" label="Apellidos" required value={customer.lastName}
+                onChange={(v) => setCustomer({ lastName: v })} onBlur={() => touch('lastName')}
+                error={err('lastName')} placeholder="Pérez" autoComplete="family-name" />
+            </div>
+            <Field id="phone" label="Celular" required type="tel" inputMode="tel" value={customer.phone}
+              onChange={(v) => setCustomer({ phone: v })} onBlur={() => touch('phone')}
+              error={err('phone')} placeholder="0998001894" autoComplete="tel" />
+            <Field id="email" label="Correo electrónico" required type="email" inputMode="email" value={customer.email}
+              onChange={(v) => setCustomer({ email: v })} onBlur={() => touch('email')}
+              error={err('email')} placeholder="maria@correo.com" autoComplete="email" />
+            <Field id="address" label="Dirección de envío" required value={customer.address}
+              onChange={(v) => setCustomer({ address: v })} onBlur={() => touch('address')}
+              error={err('address')} placeholder="Calle principal, número y secundaria" autoComplete="street-address" />
+            <Field id="city" label="Ciudad" required value={customer.city}
+              onChange={(v) => setCustomer({ city: v })} onBlur={() => touch('city')}
+              error={err('city')} placeholder="Cuenca" autoComplete="address-level2" />
             <div>
               <label htmlFor="notes" className="label">Notas (opcional)</label>
               <textarea
@@ -240,6 +248,39 @@ export function CartView({ settings }: { settings: SiteSettings }) {
                 placeholder="Color preferido, fecha de entrega…"
               />
             </div>
+          </div>
+
+          <div className="space-y-3 border-t border-ink-200/60 pt-5">
+            <h3 className="label">Datos de facturación</h3>
+            <label className="flex items-center gap-2 text-sm text-ink-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={customer.billingSame}
+                onChange={(e) => setCustomer({ billingSame: e.target.checked })}
+                className="h-4 w-4"
+              />
+              Usar los mismos datos del envío
+            </label>
+            <Field id="billingDocumentId" label="Cédula o RUC" required inputMode="numeric" value={customer.billingDocumentId}
+              onChange={(v) => setCustomer({ billingDocumentId: v })} onBlur={() => touch('billingDocumentId')}
+              error={err('billingDocumentId')} placeholder="0102030405" />
+            <div className="grid grid-cols-2 gap-3">
+              <Field id="billingFirstName" label="Nombres" required disabled={customer.billingSame}
+                value={billing.firstName} onChange={(v) => setCustomer({ billingFirstName: v })}
+                onBlur={() => touch('billingFirstName')} error={err('billingFirstName')} autoComplete="off" />
+              <Field id="billingLastName" label="Apellidos" required disabled={customer.billingSame}
+                value={billing.lastName} onChange={(v) => setCustomer({ billingLastName: v })}
+                onBlur={() => touch('billingLastName')} error={err('billingLastName')} autoComplete="off" />
+            </div>
+            <Field id="billingPhone" label="Celular" required type="tel" inputMode="tel" disabled={customer.billingSame}
+              value={billing.phone} onChange={(v) => setCustomer({ billingPhone: v })}
+              onBlur={() => touch('billingPhone')} error={err('billingPhone')} autoComplete="off" />
+            <Field id="billingEmail" label="Correo electrónico" required type="email" inputMode="email" disabled={customer.billingSame}
+              value={billing.email} onChange={(v) => setCustomer({ billingEmail: v })}
+              onBlur={() => touch('billingEmail')} error={err('billingEmail')} autoComplete="off" />
+            <Field id="billingAddress" label="Dirección" required disabled={customer.billingSame}
+              value={billing.address} onChange={(v) => setCustomer({ billingAddress: v })}
+              onBlur={() => touch('billingAddress')} error={err('billingAddress')} autoComplete="off" />
           </div>
 
           {payphoneEnabled && (
@@ -283,7 +324,7 @@ export function CartView({ settings }: { settings: SiteSettings }) {
           {!isValid ? (
             <button
               type="button"
-              onClick={() => setTouched({ name: true, city: true })}
+              onClick={() => setSubmitted(true)}
               className="btn-primary w-full opacity-90"
               aria-disabled="true"
             >
@@ -302,6 +343,10 @@ export function CartView({ settings }: { settings: SiteSettings }) {
                   tax={payphoneAmounts.tax}
                   reference={payphoneAmounts.reference}
                   currency={payphoneAmounts.currency}
+                  phoneNumber={payphoneAmounts.phoneNumber}
+                  email={payphoneAmounts.email}
+                  documentId={payphoneAmounts.documentId}
+                  identificationType={payphoneAmounts.identificationType}
                 />
               ) : (
                 <button
@@ -350,6 +395,9 @@ function Field({
   error,
   placeholder,
   autoComplete,
+  type,
+  inputMode,
+  disabled,
 }: {
   id: string;
   label: string;
@@ -360,6 +408,9 @@ function Field({
   error?: string;
   placeholder?: string;
   autoComplete?: string;
+  type?: string;
+  inputMode?: 'text' | 'tel' | 'email' | 'numeric';
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -368,13 +419,16 @@ function Field({
       </label>
       <input
         id={id}
+        type={type ?? 'text'}
+        inputMode={inputMode}
+        disabled={disabled}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         autoComplete={autoComplete}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`input mt-1.5 ${error ? 'border-danger focus:border-danger focus:ring-danger/15' : ''}`}
+        className={`input mt-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${error ? 'border-danger focus:border-danger focus:ring-danger/15' : ''}`}
         placeholder={placeholder}
       />
       {error && (
@@ -382,13 +436,6 @@ function Field({
       )}
     </div>
   );
-}
-
-function validate(c: CustomerData): { name?: string; city?: string } {
-  const errors: { name?: string; city?: string } = {};
-  if (c.name.trim().length < 2) errors.name = 'Cuéntanos tu nombre.';
-  if (c.city.trim().length < 2) errors.city = 'Cuéntanos tu ciudad.';
-  return errors;
 }
 
 function BagIcon(props: React.SVGProps<SVGSVGElement>) {

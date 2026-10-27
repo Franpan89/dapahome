@@ -47,6 +47,10 @@ export interface PayphoneBoxProps {
   tax: number;
   reference: string;
   currency?: string;
+  phoneNumber?: string;
+  email?: string;
+  documentId?: string;
+  identificationType?: number;
 }
 
 export function PayphoneBox(props: PayphoneBoxProps) {
@@ -73,6 +77,10 @@ export function PayphoneBox(props: PayphoneBoxProps) {
           reference: props.reference,
           lang: 'es',
           defaultMethod: 'card',
+          phoneNumber: props.phoneNumber,
+          email: props.email,
+          documentId: props.documentId,
+          identificationType: props.identificationType,
         }).render(containerId);
       })
       .catch(() => {
