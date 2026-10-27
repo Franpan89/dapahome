@@ -78,7 +78,7 @@ export function CartDrawer() {
               </div>
               <p className="font-display text-xl">Tu carrito está vacío</p>
               <p className="text-sm text-ink-600">
-                Agrega productos y luego finaliza tu pedido por WhatsApp.
+                Agrega productos y luego continúa con el pago.
               </p>
               <Link href="/catalogo" onClick={close} className="btn-primary mt-3">
                 Explorar catálogo
@@ -179,7 +179,7 @@ export function CartDrawer() {
               Elige retiro en oficina (sin costo) o envío (+ {formatMoney(5)}) en el siguiente paso.
             </p>
             <Link href="/carrito" onClick={close} className="btn-primary w-full">
-              Finalizar por WhatsApp
+              Continuar con el pago
               <ArrowIcon className="h-4 w-4" />
             </Link>
           </footer>

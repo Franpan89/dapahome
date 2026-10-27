@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { EMPTY_CUSTOMER, type CustomerData } from '@/lib/cart/customer';
 
 export interface CartItem {
   productId: string;
@@ -16,14 +17,7 @@ export interface CartItem {
   quantity: number;
 }
 
-export type DeliveryMethod = 'pickup' | 'delivery';
-
-export interface CustomerData {
-  name: string;
-  city: string;
-  notes: string;
-  delivery: DeliveryMethod;
-}
+export type { DeliveryMethod, CustomerData } from '@/lib/cart/customer';
 
 interface CartState {
   items: CartItem[];
@@ -47,7 +41,7 @@ export const useCart = create<CartState>()(
     (set) => ({
       items: [],
       isOpen: false,
-      customer: { name: '', city: '', notes: '', delivery: 'pickup' },
+      customer: EMPTY_CUSTOMER,
       setCustomer: (patch) => set((s) => ({ customer: { ...s.customer, ...patch } })),
       add: (item, qty = 1) =>
         set((s) => {
@@ -73,7 +67,13 @@ export const useCart = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
     }),
-    { name: 'dapa-cart-v2' },
+    {
+      name: 'dapa-cart-v2',
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<CartState>;
+        return { ...current, ...p, customer: { ...EMPTY_CUSTOMER, ...(p.customer ?? {}) } };
+      },
+    },
   ),
 );
 

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { imageUrl } from '@/lib/supabase/image';
 import { formatMoney, TAX_LABEL, withTax } from '@/lib/format';
 import { useCart } from '@/lib/cart/store';
+import { EMPTY_CUSTOMER } from '@/lib/cart/customer';
 import type { ProductWithRelations, ProductVariant, ProductColor } from '@/lib/supabase/types';
 import { cn } from '@/lib/cn';
 import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
@@ -80,7 +81,7 @@ export function ProductDetail({ product }: { product: ProductWithRelations }) {
           quantity: qty,
         },
       ],
-      data: { name: '', city: '', notes: '' },
+      data: EMPTY_CUSTOMER,
       template: {
         intro: 'Hola Dapa Home 👋, me interesa este producto:',
         outro: '¿Me podrían dar más información? ¡Gracias!',

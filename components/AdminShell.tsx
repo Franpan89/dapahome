@@ -17,6 +17,7 @@ export function AdminShell({ children, email }: { children: React.ReactNode; ema
         </div>
         <nav className="p-3 grid gap-1 text-sm">
           <AdminLink href="/admin">Dashboard</AdminLink>
+          <AdminLink href="/admin/pedidos">Pedidos</AdminLink>
           <AdminLink href="/admin/productos">Productos</AdminLink>
           <AdminLink href="/admin/categorias">Categorías</AdminLink>
           <AdminLink href="/admin/instalaciones">Instalaciones</AdminLink>

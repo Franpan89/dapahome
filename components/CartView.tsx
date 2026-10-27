@@ -2,97 +2,21 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
+import { useCart, cartTotals, cartItemKey } from '@/lib/cart/store';
 import { formatMoney, TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
-import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
-import { PayphoneBox } from '@/components/PayphoneBox';
-import type { SiteSettings } from '@/lib/supabase/types';
 
-const PAYPHONE_TOKEN = process.env.NEXT_PUBLIC_PAYPHONE_TOKEN;
-const PAYPHONE_STORE_ID = process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID;
-
-type PaymentMethod = 'whatsapp' | 'payphone';
-
-interface PayphoneAmounts {
-  clientTransactionId: string;
-  amount: number;
-  amountWithoutTax: number;
-  amountWithTax: number;
-  tax: number;
-  reference: string;
-  currency: string;
-}
-
-export function CartView({ settings }: { settings: SiteSettings }) {
+export function CartView() {
   const items = useCart((s) => s.items);
   const remove = useCart((s) => s.remove);
   const setQty = useCart((s) => s.setQty);
   const clear = useCart((s) => s.clear);
-  const customer = useCart((s) => s.customer);
+  const delivery = useCart((s) => s.customer.delivery);
   const setCustomer = useCart((s) => s.setCustomer);
   const { subtotal, count } = cartTotals(items);
 
-  const router = useRouter();
-  const [touched, setTouched] = useState({ name: false, city: false });
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('whatsapp');
-  const [payphoneAmounts, setPayphoneAmounts] = useState<PayphoneAmounts | null>(null);
-  const [payphoneStatus, setPayphoneStatus] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [payphoneError, setPayphoneError] = useState<string | null>(null);
-
-  const errors = validate(customer);
-  const isValid = Object.values(errors).every((e) => !e);
-
-  const isDelivery = customer.delivery === 'delivery';
+  const isDelivery = delivery === 'delivery';
   const shippingFee = isDelivery ? DELIVERY_FEE : 0;
-  const iva = taxAmount(subtotal);
   const total = withTax(subtotal) + shippingFee;
-
-  const previewMsg = useMemo(
-    () =>
-      buildWhatsAppMessage({
-        items,
-        data: customer,
-        template: settings.checkout_template,
-      }),
-    [items, customer, settings],
-  );
-
-  const href = whatsappHref(settings.whatsapp.number, previewMsg);
-
-  const handleCheckout = useCallback(() => {
-    window.open(href, '_blank', 'noopener,noreferrer');
-    clear();
-    router.push('/gracias');
-  }, [href, clear, router]);
-
-  // Si el carrito o los datos cambian después de generar el botón de PayPhone,
-  // invalidamos el pedido pendiente para no cobrar un monto desactualizado.
-  useEffect(() => {
-    setPayphoneAmounts(null);
-  }, [items, customer]);
-
-  const handleCreatePayphoneOrder = useCallback(async () => {
-    setPayphoneStatus('loading');
-    setPayphoneError(null);
-    try {
-      const res = await fetch('/api/payphone/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, customer }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? 'No se pudo generar el pago.');
-      setPayphoneAmounts(data);
-      setPayphoneStatus('idle');
-    } catch (err) {
-      setPayphoneStatus('error');
-      setPayphoneError(err instanceof Error ? err.message : 'No se pudo generar el pago.');
-    }
-  }, [items, customer]);
-
-  const payphoneEnabled = Boolean(PAYPHONE_TOKEN);
 
   if (count === 0) {
     return (
@@ -101,7 +25,7 @@ export function CartView({ settings }: { settings: SiteSettings }) {
           <BagIcon className="h-7 w-7" />
         </div>
         <p className="font-display text-2xl">Tu carrito está vacío</p>
-        <p className="text-ink-600">Agrega productos para enviarlos por WhatsApp.</p>
+        <p className="text-ink-600">Agrega productos para continuar con tu pedido.</p>
         <Link href="/catalogo" className="btn-primary mt-2">Explorar catálogo</Link>
       </div>
     );
@@ -152,243 +76,79 @@ export function CartView({ settings }: { settings: SiteSettings }) {
           <div>
             <span className="label">Entrega</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                type="button"
+              <DeliveryOption
+                active={delivery === 'pickup'}
                 onClick={() => setCustomer({ delivery: 'pickup' })}
-                aria-pressed={customer.delivery === 'pickup'}
-                className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
-                  customer.delivery === 'pickup'
-                    ? 'border-ink-900 bg-ink-900 text-white'
-                    : 'border-ink-200 hover:border-ink-400'
-                }`}
-              >
-                <div className="font-medium">Retiro en oficina</div>
-                <div className={`text-2xs ${customer.delivery === 'pickup' ? 'text-white/70' : 'text-ink-600'}`}>Sin costo</div>
-              </button>
-              <button
-                type="button"
+                title="Retiro en oficina"
+                hint="Sin costo"
+              />
+              <DeliveryOption
+                active={delivery === 'delivery'}
                 onClick={() => setCustomer({ delivery: 'delivery' })}
-                aria-pressed={customer.delivery === 'delivery'}
-                className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
-                  customer.delivery === 'delivery'
-                    ? 'border-ink-900 bg-ink-900 text-white'
-                    : 'border-ink-200 hover:border-ink-400'
-                }`}
-              >
-                <div className="font-medium">Envío a domicilio</div>
-                <div className={`text-2xs ${customer.delivery === 'delivery' ? 'text-white/70' : 'text-ink-600'}`}>
-                  {formatMoney(DELIVERY_FEE)} a nivel nacional
-                </div>
-              </button>
+                title="Envío a domicilio"
+                hint={`${formatMoney(DELIVERY_FEE)} a nivel nacional`}
+              />
             </div>
-            {customer.delivery === 'pickup' && (
+            {delivery === 'pickup' && (
               <p className="mt-2 text-2xs text-ink-600">{PICKUP_ADDRESS} · coordinamos hora por WhatsApp.</p>
             )}
           </div>
 
           <div className="space-y-2 border-t border-ink-200/60 pt-4">
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="text-ink-600">Subtotal</span>
-              <span className="font-mono tabular-nums">{formatMoney(subtotal)}</span>
-            </div>
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="text-ink-600">{TAX_LABEL}</span>
-              <span className="font-mono tabular-nums">+ {formatMoney(iva)}</span>
-            </div>
-            <div className="flex items-baseline justify-between text-sm">
-              <span className="text-ink-600">{isDelivery ? 'Envío' : 'Retiro en oficina'}</span>
-              <span className="font-mono tabular-nums">
-                {shippingFee > 0 ? `+ ${formatMoney(shippingFee)}` : 'Gratis'}
-              </span>
-            </div>
+            <Row label="Subtotal" value={formatMoney(subtotal)} />
+            <Row label={TAX_LABEL} value={`+ ${formatMoney(taxAmount(subtotal))}`} />
+            <Row
+              label={isDelivery ? 'Envío' : 'Retiro en oficina'}
+              value={shippingFee > 0 ? `+ ${formatMoney(shippingFee)}` : 'Gratis'}
+            />
             <div className="flex items-baseline justify-between pt-3 border-t border-ink-200/60">
               <span className="label">Total a pagar</span>
               <span className="font-mono text-2xl tabular-nums font-semibold">{formatMoney(total)}</span>
             </div>
           </div>
 
-          <div className="space-y-3 border-t border-ink-200/60 pt-5">
-            <Field
-              id="name"
-              label="Nombre completo"
-              required
-              value={customer.name}
-              onChange={(v) => setCustomer({ name: v })}
-              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
-              error={touched.name ? errors.name : undefined}
-              placeholder="María Pérez"
-              autoComplete="name"
-            />
-            <Field
-              id="city"
-              label="Ciudad"
-              required
-              value={customer.city}
-              onChange={(v) => setCustomer({ city: v })}
-              onBlur={() => setTouched((t) => ({ ...t, city: true }))}
-              error={touched.city ? errors.city : undefined}
-              placeholder="Cuenca"
-              autoComplete="address-level2"
-            />
-            <div>
-              <label htmlFor="notes" className="label">Notas (opcional)</label>
-              <textarea
-                id="notes"
-                value={customer.notes}
-                onChange={(e) => setCustomer({ notes: e.target.value })}
-                className="input mt-1.5 min-h-[88px]"
-                placeholder="Color preferido, fecha de entrega…"
-              />
-            </div>
-          </div>
-
-          {payphoneEnabled && (
-            <div className="border-t border-ink-200/60 pt-4">
-              <span className="label">Método de pago</span>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('payphone')}
-                  aria-pressed={paymentMethod === 'payphone'}
-                  className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
-                    paymentMethod === 'payphone'
-                      ? 'border-ink-900 bg-ink-900 text-white'
-                      : 'border-ink-200 hover:border-ink-400'
-                  }`}
-                >
-                  <div className="font-medium">Pagar ahora</div>
-                  <div className={`text-2xs ${paymentMethod === 'payphone' ? 'text-white/70' : 'text-ink-600'}`}>
-                    Tarjeta vía PayPhone
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('whatsapp')}
-                  aria-pressed={paymentMethod === 'whatsapp'}
-                  className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
-                    paymentMethod === 'whatsapp'
-                      ? 'border-ink-900 bg-ink-900 text-white'
-                      : 'border-ink-200 hover:border-ink-400'
-                  }`}
-                >
-                  <div className="font-medium">Coordinar por WhatsApp</div>
-                  <div className={`text-2xs ${paymentMethod === 'whatsapp' ? 'text-white/70' : 'text-ink-600'}`}>
-                    Transferencia o pago contra entrega
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {!isValid ? (
-            <button
-              type="button"
-              onClick={() => setTouched({ name: true, city: true })}
-              className="btn-primary w-full opacity-90"
-              aria-disabled="true"
-            >
-              Completa tus datos
-            </button>
-          ) : payphoneEnabled && paymentMethod === 'payphone' ? (
-            <div className="space-y-3">
-              {payphoneAmounts ? (
-                <PayphoneBox
-                  token={PAYPHONE_TOKEN!}
-                  storeId={PAYPHONE_STORE_ID}
-                  clientTransactionId={payphoneAmounts.clientTransactionId}
-                  amount={payphoneAmounts.amount}
-                  amountWithoutTax={payphoneAmounts.amountWithoutTax}
-                  amountWithTax={payphoneAmounts.amountWithTax}
-                  tax={payphoneAmounts.tax}
-                  reference={payphoneAmounts.reference}
-                  currency={payphoneAmounts.currency}
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleCreatePayphoneOrder}
-                  disabled={payphoneStatus === 'loading'}
-                  className="btn-primary w-full disabled:opacity-60"
-                >
-                  {payphoneStatus === 'loading' ? 'Generando pago…' : 'Pagar con tarjeta'}
-                </button>
-              )}
-              {payphoneStatus === 'error' && payphoneError && (
-                <p className="text-2xs text-danger text-center">{payphoneError}</p>
-              )}
-            </div>
-          ) : (
-            <button type="button" onClick={handleCheckout} className="btn-primary w-full">
-              <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
-            </button>
-          )}
-          <p className="text-2xs text-ink-600 text-center">
-            {payphoneEnabled && paymentMethod === 'payphone'
-              ? 'Pago seguro procesado por PayPhone. Te contactaremos para coordinar la entrega.'
-              : 'Se abrirá WhatsApp con tu pedido pre-formateado. Confirmamos disponibilidad y envío por chat.'}
-          </p>
-
-          {!(payphoneEnabled && paymentMethod === 'payphone') && (
-            <details className="text-xs text-ink-600 border-t border-ink-200/60 pt-4">
-              <summary className="cursor-pointer hover:text-primary">Vista previa del mensaje</summary>
-              <pre className="mt-3 whitespace-pre-wrap font-mono text-2xs bg-ink-100 p-3 rounded">{previewMsg}</pre>
-            </details>
-          )}
+          <Link href="/carrito/pago" className="btn-primary w-full">
+            Continuar con el pago
+          </Link>
         </div>
       </aside>
     </div>
   );
 }
 
-function Field({
-  id,
-  label,
-  value,
-  onChange,
-  onBlur,
-  required,
-  error,
-  placeholder,
-  autoComplete,
+function DeliveryOption({
+  active,
+  onClick,
+  title,
+  hint,
 }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  onBlur?: () => void;
-  required?: boolean;
-  error?: string;
-  placeholder?: string;
-  autoComplete?: string;
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  hint: string;
 }) {
   return (
-    <div>
-      <label htmlFor={id} className="label">
-        {label} {required && <span className="text-danger">*</span>}
-      </label>
-      <input
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
-        autoComplete={autoComplete}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className={`input mt-1.5 ${error ? 'border-danger focus:border-danger focus:ring-danger/15' : ''}`}
-        placeholder={placeholder}
-      />
-      {error && (
-        <p id={`${id}-error`} className="mt-1 text-2xs text-danger">{error}</p>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+        active ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-200 hover:border-ink-400'
+      }`}
+    >
+      <div className="font-medium">{title}</div>
+      <div className={`text-2xs ${active ? 'text-white/70' : 'text-ink-600'}`}>{hint}</div>
+    </button>
   );
 }
 
-function validate(c: CustomerData): { name?: string; city?: string } {
-  const errors: { name?: string; city?: string } = {};
-  if (c.name.trim().length < 2) errors.name = 'Cuéntanos tu nombre.';
-  if (c.city.trim().length < 2) errors.city = 'Cuéntanos tu ciudad.';
-  return errors;
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between text-sm">
+      <span className="text-ink-600">{label}</span>
+      <span className="font-mono tabular-nums">{value}</span>
+    </div>
+  );
 }
 
 function BagIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -396,13 +156,6 @@ function BagIcon(props: React.SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
       <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
       <path d="M9 8a3 3 0 0 1 6 0" strokeLinecap="round" />
-    </svg>
-  );
-}
-function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.93.55 3.81 1.6 5.45L2 22l4.79-1.7a9.86 9.86 0 0 0 5.25 1.5h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.13-2.9-7C17.18 3.03 14.69 2 12.04 2Zm0 18.03h-.01a8.2 8.2 0 0 1-4.18-1.14l-.3-.18-2.85 1.01.96-2.78-.2-.31a8.13 8.13 0 0 1-1.27-4.42c0-4.51 3.67-8.18 8.19-8.18 2.19 0 4.24.85 5.79 2.4a8.13 8.13 0 0 1 2.4 5.79c0 4.52-3.67 8.18-8.19 8.18Z" />
     </svg>
   );
 }

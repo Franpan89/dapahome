@@ -157,3 +157,12 @@
     animation: kenburns 12s ease-out forwards;
   }
 }
+
+/* La hoja de PayPhone define `:root { font-size: 13px; ... }` y reduce todo el sitio.
+   `html:root` tiene más especificidad y restaura la base de Tailwind. */
+html:root {
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  font-family: theme('fontFamily.sans');
+}
