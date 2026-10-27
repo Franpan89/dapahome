@@ -63,10 +63,17 @@ export function CheckoutView({ settings }: { settings: SiteSettings }) {
   const href = whatsappHref(settings.whatsapp.number, previewMsg);
 
   const handleWhatsApp = useCallback(() => {
+    // Registra el pedido para el panel admin sin retrasar la apertura de WhatsApp.
+    fetch('/api/orders/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, customer }),
+      keepalive: true,
+    }).catch(() => {});
     window.open(href, '_blank', 'noopener,noreferrer');
     clear();
     router.push('/gracias');
-  }, [href, clear, router]);
+  }, [href, items, customer, clear, router]);
 
   // Invalida el pedido pendiente de PayPhone si cambian el carrito o los datos.
   useEffect(() => {
