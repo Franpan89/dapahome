@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(amounts);
   } catch (err) {
+    console.error('[payphone/create-order]', err);
     const message = err instanceof OrderError ? err.message : 'No se pudo crear el pedido.';
     const status = err instanceof OrderError ? err.statusCode : 500;
     return NextResponse.json({ error: message }, { status });

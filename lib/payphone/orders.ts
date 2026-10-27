@@ -70,7 +70,10 @@ export async function createPayphoneOrder({
     total,
     currency,
   });
-  if (error) throw new OrderError(500, 'No se pudo registrar el pedido.');
+  if (error) {
+    console.error('[payphone/orders] insert failed', error);
+    throw new OrderError(500, 'No se pudo registrar el pedido.');
+  }
 
   return {
     clientTransactionId,
