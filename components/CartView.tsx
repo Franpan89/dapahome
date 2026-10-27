@@ -6,9 +6,24 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart, cartTotals, cartItemKey, type CustomerData } from '@/lib/cart/store';
 import { formatMoney, TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
-import { buildWhatsAppMessage, whatsappHref, type ShippingQuote } from '@/lib/whatsapp/buildMessage';
-import { TerritoryCombobox } from '@/components/TerritoryCombobox';
+import { buildWhatsAppMessage, whatsappHref } from '@/lib/whatsapp/buildMessage';
+import { PayphoneBox } from '@/components/PayphoneBox';
 import type { SiteSettings } from '@/lib/supabase/types';
+
+const PAYPHONE_TOKEN = process.env.NEXT_PUBLIC_PAYPHONE_TOKEN;
+const PAYPHONE_STORE_ID = process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID;
+
+type PaymentMethod = 'whatsapp' | 'payphone';
+
+interface PayphoneAmounts {
+  clientTransactionId: string;
+  amount: number;
+  amountWithoutTax: number;
+  amountWithTax: number;
+  tax: number;
+  reference: string;
+  currency: string;
+}
 
 export function CartView({ settings }: { settings: SiteSettings }) {
   const items = useCart((s) => s.items);
@@ -21,43 +36,16 @@ export function CartView({ settings }: { settings: SiteSettings }) {
 
   const router = useRouter();
   const [touched, setTouched] = useState({ name: false, city: false });
-  const [quote, setQuote] = useState<ShippingQuote | null>(null);
-  const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('whatsapp');
+  const [payphoneAmounts, setPayphoneAmounts] = useState<PayphoneAmounts | null>(null);
+  const [payphoneStatus, setPayphoneStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [payphoneError, setPayphoneError] = useState<string | null>(null);
 
   const errors = validate(customer);
   const isValid = Object.values(errors).every((e) => !e);
 
-  useEffect(() => {
-    if (customer.delivery !== 'delivery' || !customer.territoryBaseId) {
-      setQuote(null);
-      setQuoteStatus('idle');
-      return;
-    }
-    let cancelled = false;
-    setQuoteStatus('loading');
-    fetch('/api/shipping-quote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ territoryBaseId: customer.territoryBaseId }),
-    })
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data: ShippingQuote) => {
-        if (cancelled) return;
-        setQuote(data);
-        setQuoteStatus('ok');
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setQuote(null);
-        setQuoteStatus('error');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [customer.delivery, customer.territoryBaseId]);
-
   const isDelivery = customer.delivery === 'delivery';
-  const shippingFee = isDelivery ? (quote?.priceTotal ?? DELIVERY_FEE) : 0;
+  const shippingFee = isDelivery ? DELIVERY_FEE : 0;
   const iva = taxAmount(subtotal);
   const total = withTax(subtotal) + shippingFee;
 
@@ -67,9 +55,8 @@ export function CartView({ settings }: { settings: SiteSettings }) {
         items,
         data: customer,
         template: settings.checkout_template,
-        shippingQuote: quote,
       }),
-    [items, customer, settings, quote],
+    [items, customer, settings],
   );
 
   const href = whatsappHref(settings.whatsapp.number, previewMsg);
@@ -79,6 +66,33 @@ export function CartView({ settings }: { settings: SiteSettings }) {
     clear();
     router.push('/gracias');
   }, [href, clear, router]);
+
+  // Si el carrito o los datos cambian después de generar el botón de PayPhone,
+  // invalidamos el pedido pendiente para no cobrar un monto desactualizado.
+  useEffect(() => {
+    setPayphoneAmounts(null);
+  }, [items, customer]);
+
+  const handleCreatePayphoneOrder = useCallback(async () => {
+    setPayphoneStatus('loading');
+    setPayphoneError(null);
+    try {
+      const res = await fetch('/api/payphone/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, customer }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'No se pudo generar el pago.');
+      setPayphoneAmounts(data);
+      setPayphoneStatus('idle');
+    } catch (err) {
+      setPayphoneStatus('error');
+      setPayphoneError(err instanceof Error ? err.message : 'No se pudo generar el pago.');
+    }
+  }, [items, customer]);
+
+  const payphoneEnabled = Boolean(PAYPHONE_TOKEN);
 
   if (count === 0) {
     return (
@@ -163,7 +177,7 @@ export function CartView({ settings }: { settings: SiteSettings }) {
               >
                 <div className="font-medium">Envío a domicilio</div>
                 <div className={`text-2xs ${customer.delivery === 'delivery' ? 'text-white/70' : 'text-ink-600'}`}>
-                  Se cotiza según tu ciudad
+                  {formatMoney(DELIVERY_FEE)} a nivel nacional
                 </div>
               </button>
             </div>
@@ -184,28 +198,13 @@ export function CartView({ settings }: { settings: SiteSettings }) {
             <div className="flex items-baseline justify-between text-sm">
               <span className="text-ink-600">{isDelivery ? 'Envío' : 'Retiro en oficina'}</span>
               <span className="font-mono tabular-nums">
-                {isDelivery && quoteStatus === 'loading'
-                  ? 'Calculando…'
-                  : shippingFee > 0
-                    ? `+ ${formatMoney(shippingFee)}`
-                    : 'Gratis'}
+                {shippingFee > 0 ? `+ ${formatMoney(shippingFee)}` : 'Gratis'}
               </span>
             </div>
             <div className="flex items-baseline justify-between pt-3 border-t border-ink-200/60">
               <span className="label">Total a pagar</span>
               <span className="font-mono text-2xl tabular-nums font-semibold">{formatMoney(total)}</span>
             </div>
-            {isDelivery && quoteStatus === 'ok' && quote && (
-              <p className="text-2xs text-ink-600">Entrega estimada: {quote.estimateDays} día(s) hábiles.</p>
-            )}
-            {isDelivery && quoteStatus === 'error' && (
-              <p className="text-2xs text-danger">
-                No pudimos cotizar tu ciudad ahora mismo. Se muestra un envío estimado de {formatMoney(DELIVERY_FEE)} — confirmamos el valor final por WhatsApp.
-              </p>
-            )}
-            {isDelivery && !customer.territoryBaseId && (
-              <p className="text-2xs text-ink-600">Elige tu ciudad para ver el costo real de envío.</p>
-            )}
           </div>
 
           <div className="space-y-3 border-t border-ink-200/60 pt-5">
@@ -220,13 +219,16 @@ export function CartView({ settings }: { settings: SiteSettings }) {
               placeholder="María Pérez"
               autoComplete="name"
             />
-            <TerritoryCombobox
+            <Field
               id="city"
               label="Ciudad"
+              required
               value={customer.city}
-              onSelect={(territoryBaseId, label) => setCustomer({ territoryBaseId, city: label })}
+              onChange={(v) => setCustomer({ city: v })}
               onBlur={() => setTouched((t) => ({ ...t, city: true }))}
               error={touched.city ? errors.city : undefined}
+              placeholder="Cuenca"
+              autoComplete="address-level2"
             />
             <div>
               <label htmlFor="notes" className="label">Notas (opcional)</label>
@@ -240,28 +242,98 @@ export function CartView({ settings }: { settings: SiteSettings }) {
             </div>
           </div>
 
-          {isValid && !(isDelivery && quoteStatus === 'loading') ? (
-            <button type="button" onClick={handleCheckout} className="btn-primary w-full">
-              <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
-            </button>
-          ) : (
+          {payphoneEnabled && (
+            <div className="border-t border-ink-200/60 pt-4">
+              <span className="label">Método de pago</span>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('payphone')}
+                  aria-pressed={paymentMethod === 'payphone'}
+                  className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                    paymentMethod === 'payphone'
+                      ? 'border-ink-900 bg-ink-900 text-white'
+                      : 'border-ink-200 hover:border-ink-400'
+                  }`}
+                >
+                  <div className="font-medium">Pagar ahora</div>
+                  <div className={`text-2xs ${paymentMethod === 'payphone' ? 'text-white/70' : 'text-ink-600'}`}>
+                    Tarjeta vía PayPhone
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('whatsapp')}
+                  aria-pressed={paymentMethod === 'whatsapp'}
+                  className={`rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                    paymentMethod === 'whatsapp'
+                      ? 'border-ink-900 bg-ink-900 text-white'
+                      : 'border-ink-200 hover:border-ink-400'
+                  }`}
+                >
+                  <div className="font-medium">Coordinar por WhatsApp</div>
+                  <div className={`text-2xs ${paymentMethod === 'whatsapp' ? 'text-white/70' : 'text-ink-600'}`}>
+                    Transferencia o pago contra entrega
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!isValid ? (
             <button
               type="button"
               onClick={() => setTouched({ name: true, city: true })}
               className="btn-primary w-full opacity-90"
               aria-disabled="true"
             >
-              <WhatsAppIcon className="h-4 w-4" /> Completa tus datos
+              Completa tus datos
+            </button>
+          ) : payphoneEnabled && paymentMethod === 'payphone' ? (
+            <div className="space-y-3">
+              {payphoneAmounts ? (
+                <PayphoneBox
+                  token={PAYPHONE_TOKEN!}
+                  storeId={PAYPHONE_STORE_ID}
+                  clientTransactionId={payphoneAmounts.clientTransactionId}
+                  amount={payphoneAmounts.amount}
+                  amountWithoutTax={payphoneAmounts.amountWithoutTax}
+                  amountWithTax={payphoneAmounts.amountWithTax}
+                  tax={payphoneAmounts.tax}
+                  reference={payphoneAmounts.reference}
+                  currency={payphoneAmounts.currency}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCreatePayphoneOrder}
+                  disabled={payphoneStatus === 'loading'}
+                  className="btn-primary w-full disabled:opacity-60"
+                >
+                  {payphoneStatus === 'loading' ? 'Generando pago…' : 'Pagar con tarjeta'}
+                </button>
+              )}
+              {payphoneStatus === 'error' && payphoneError && (
+                <p className="text-2xs text-danger text-center">{payphoneError}</p>
+              )}
+            </div>
+          ) : (
+            <button type="button" onClick={handleCheckout} className="btn-primary w-full">
+              <WhatsAppIcon className="h-4 w-4" /> Finalizar por WhatsApp
             </button>
           )}
           <p className="text-2xs text-ink-600 text-center">
-            Se abrirá WhatsApp con tu pedido pre-formateado. Confirmamos disponibilidad y envío por chat.
+            {payphoneEnabled && paymentMethod === 'payphone'
+              ? 'Pago seguro procesado por PayPhone. Te contactaremos para coordinar la entrega.'
+              : 'Se abrirá WhatsApp con tu pedido pre-formateado. Confirmamos disponibilidad y envío por chat.'}
           </p>
 
-          <details className="text-xs text-ink-600 border-t border-ink-200/60 pt-4">
-            <summary className="cursor-pointer hover:text-primary">Vista previa del mensaje</summary>
-            <pre className="mt-3 whitespace-pre-wrap font-mono text-2xs bg-ink-100 p-3 rounded">{previewMsg}</pre>
-          </details>
+          {!(payphoneEnabled && paymentMethod === 'payphone') && (
+            <details className="text-xs text-ink-600 border-t border-ink-200/60 pt-4">
+              <summary className="cursor-pointer hover:text-primary">Vista previa del mensaje</summary>
+              <pre className="mt-3 whitespace-pre-wrap font-mono text-2xs bg-ink-100 p-3 rounded">{previewMsg}</pre>
+            </details>
+          )}
         </div>
       </aside>
     </div>
@@ -315,7 +387,7 @@ function Field({
 function validate(c: CustomerData): { name?: string; city?: string } {
   const errors: { name?: string; city?: string } = {};
   if (c.name.trim().length < 2) errors.name = 'Cuéntanos tu nombre.';
-  if (!c.territoryBaseId) errors.city = 'Elige tu ciudad de la lista para poder cotizar el envío.';
+  if (c.city.trim().length < 2) errors.city = 'Cuéntanos tu ciudad.';
   return errors;
 }
 
