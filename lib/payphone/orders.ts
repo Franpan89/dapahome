@@ -2,7 +2,8 @@ import { randomUUID } from 'crypto';
 import { createSupabaseAdmin } from '@/lib/supabase/server';
 import { taxAmount, withTax, DELIVERY_FEE } from '@/lib/format';
 import { confirmPayphoneTransaction, toCents, PayphoneError } from '@/lib/payphone/client';
-import type { CartItem, CustomerData } from '@/lib/cart/store';
+import type { CartItem } from '@/lib/cart/store';
+import type { CustomerData } from '@/lib/cart/customer';
 import { validateCustomer, billingForPayphone } from '@/lib/checkout/validate';
 
 export class OrderError extends Error {

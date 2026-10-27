@@ -1,4 +1,4 @@
-import { effectiveBilling, type CustomerData } from '@/lib/cart/store';
+import { effectiveBilling, type CustomerData } from '@/lib/cart/customer';
 
 export type CustomerErrors = Partial<Record<keyof CustomerData, string>>;
 

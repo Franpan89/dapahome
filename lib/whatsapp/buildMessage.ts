@@ -1,4 +1,5 @@
-import { effectiveBilling, type CartItem, type CustomerData, type DeliveryMethod } from '@/lib/cart/store';
+import type { CartItem } from '@/lib/cart/store';
+import { effectiveBilling, type CustomerData, type DeliveryMethod } from '@/lib/cart/customer';
 import { TAX_LABEL, taxAmount, withTax, DELIVERY_FEE, PICKUP_ADDRESS } from '@/lib/format';
 
 export interface BuildMessageOpts {
